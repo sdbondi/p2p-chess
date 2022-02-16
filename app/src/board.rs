@@ -1,40 +1,46 @@
-use crate::{Colour, Drawable, FrameBuffer, Rect};
+use crate::{Colour, Drawable, Frame, FrameBuffer, Rect};
 
-pub struct Board {}
+pub struct ChessBoard {
+    frame: Frame,
+    light_colour: Colour,
+    dark_colour: Colour,
+}
 
-impl Board {
-    pub fn new() -> Self {
-        Self {}
+impl ChessBoard {
+    pub fn new(frame: Frame, light_colour: Colour, dark_colour: Colour) -> Self {
+        Self {
+            frame,
+            light_colour,
+            dark_colour,
+        }
     }
 }
 
-impl Drawable for Board {
+impl Drawable for ChessBoard {
     fn draw(&self, buf: &mut FrameBuffer) {
-        for i in 0..4 * 8 {
-            Rect {
-                x: (i * 200) % 800,
-                y: 100 * (i / 4),
-                w: 100,
-                h: 100,
-                colour: if (i / 4) % 2 == 0 {
-                    Colour::white()
-                } else {
-                    Colour::black()
-                },
+        for x in 0..8 {
+            for y in 0..8 {
+                Rect::new(
+                    x * self.frame.w / 8,
+                    y * self.frame.h / 8,
+                    self.frame.w / 8,
+                    self.frame.h / 8,
+                    if y % 2 == 0 {
+                        if x % 2 == 0 {
+                            self.light_colour
+                        } else {
+                            self.dark_colour
+                        }
+                    } else {
+                        if x % 2 == 0 {
+                            self.dark_colour
+                        } else {
+                            self.light_colour
+                        }
+                    },
+                )
+                .draw(buf);
             }
-            .draw(buf);
-            Rect {
-                x: ((i + 1) * 200) % 800,
-                y: 100 * (i / 4),
-                w: 100,
-                h: 100,
-                colour: if (i / 4) % 2 == 0 {
-                    Colour::black()
-                } else {
-                    Colour::white()
-                },
-            }
-            .draw(buf);
         }
     }
 }

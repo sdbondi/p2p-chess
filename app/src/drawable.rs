@@ -1,3 +1,4 @@
+use crate::Colour;
 use std::cmp;
 use std::collections::Bound;
 use std::ops::RangeBounds;
@@ -33,8 +34,8 @@ impl FrameBuffer {
         self
     }
 
-    pub fn clear(&mut self, val: u32) -> &mut Self {
-        self.buf[..].fill(val);
+    pub fn clear(&mut self, colour: Colour) -> &mut Self {
+        self.buf[..].fill(colour.to_rgb());
         self
     }
 

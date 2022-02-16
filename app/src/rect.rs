@@ -1,26 +1,44 @@
 use crate::drawable::{Drawable, FrameBuffer};
 
 pub struct Rect {
-    pub x: u32,
-    pub y: u32,
-    pub w: u32,
-    pub h: u32,
-    pub colour: Colour,
+    frame: Frame,
+    colour: Colour,
 }
-
-impl Drawable for Rect {
-    fn draw(&self, buf: &mut FrameBuffer) {
-        let x = self.x as usize;
-        let y = self.y as usize;
-        let colour = self.colour.to_rgb();
-        let w = self.w as usize;
-        let h = self.h as usize;
-        for i in 0..h {
-            buf.put_line(x, y + i, w, colour);
+impl Rect {
+    pub fn new(x: u32, y: u32, w: u32, h: u32, colour: Colour) -> Self {
+        Self {
+            frame: Frame { x, y, w, h },
+            colour,
         }
     }
 }
 
+impl Drawable for Rect {
+    fn draw(&self, buf: &mut FrameBuffer) {
+        self.frame.fill(self.colour.to_rgb(), buf);
+    }
+}
+
+pub struct Frame {
+    pub x: u32,
+    pub y: u32,
+    pub w: u32,
+    pub h: u32,
+}
+
+impl Frame {
+    pub fn fill(&self, val: u32, buf: &mut FrameBuffer) {
+        let x = self.x as usize;
+        let y = self.y as usize;
+        let w = self.w as usize;
+        let h = self.h as usize;
+        for i in 0..h {
+            buf.put_line(x, y + i, w, val);
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Colour {
     pub r: u8,
     pub g: u8,
@@ -29,7 +47,7 @@ pub struct Colour {
 }
 
 impl Colour {
-    pub fn white() -> Self {
+    pub const fn white() -> Self {
         Self {
             r: 0xff,
             g: 0xff,
@@ -38,7 +56,7 @@ impl Colour {
         }
     }
 
-    pub fn black() -> Self {
+    pub const fn black() -> Self {
         Self {
             r: 0x00,
             g: 0x00,
@@ -47,7 +65,7 @@ impl Colour {
         }
     }
 
-    pub fn green() -> Self {
+    pub const fn green() -> Self {
         Self {
             r: 0x00,
             g: 0xff,
