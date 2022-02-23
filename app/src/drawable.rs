@@ -23,23 +23,26 @@ impl FrameBuffer {
     }
 
     pub fn put_pixel(&mut self, x: usize, y: usize, val: u32) -> &mut Self {
-        self.buf[x + y * self.width] = val;
+        let pos = x + y * self.width;
+        if pos < self.buf.len() {
+            self.buf[pos] = val;
+        }
         self
     }
 
     pub fn put_line(&mut self, x: usize, y: usize, width: usize, val: u32) -> &mut Self {
         let offset_y = self.width * y;
-        self.get_slice_mut((x + offset_y)..offset_y + x + width)
+        self.as_slice_mut(x + offset_y..=x + offset_y + width)
             .fill(val);
         self
     }
 
     pub fn clear(&mut self, colour: Colour) -> &mut Self {
-        self.buf[..].fill(colour.to_rgb());
+        self.buf[..].fill(colour.to_rgba());
         self
     }
 
-    fn get_slice_mut<R: RangeBounds<usize>>(&mut self, range: R) -> &mut [u32] {
+    fn as_slice_mut<R: RangeBounds<usize>>(&mut self, range: R) -> &mut [u32] {
         let start = match range.start_bound() {
             Bound::Included(x) => cmp::min(*x + 1, self.buf.len() - 1),
             Bound::Excluded(x) => cmp::min(*x, self.buf.len() - 1),

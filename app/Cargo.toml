@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chess = "3.2.0"
-minifb = "0.19.3"
-kira = "0.5.3"
 anyhow = "1.0.41"
-tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
+kira = "0.5.3"
+minifb = "0.19.3"
 rand = "0.8.4"
+tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
 png = "0.16.8"
+pleco = "0.5.0"
