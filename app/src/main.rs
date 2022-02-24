@@ -17,7 +17,7 @@ use crate::sprite::SpriteSheet;
 use minifb::{
     HasRawWindowHandle, Key, MouseButton, MouseMode, Scale, ScaleMode, Window, WindowOptions,
 };
-use pleco::SQ;
+use pleco::{Player, SQ};
 use rand::rngs::OsRng;
 use rand::Rng;
 use std::cmp;
@@ -32,7 +32,7 @@ const BACKGROUND_COLOUR: Colour = Colour::black();
 
 fn main() -> anyhow::Result<()> {
     let opts = WindowOptions {
-        // scale: Scale::X4,
+        title: true,
         scale_mode: ScaleMode::Center,
         resize: true,
         ..Default::default()
@@ -51,7 +51,6 @@ fn ui_loop(mut window: Window) -> anyhow::Result<()> {
     let mut buf = FrameBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     buf.clear(BACKGROUND_COLOUR);
-    let sprite_sheet = init_sprite_sheet();
     let mut board = ChessBoard::new(
         Frame {
             x: 0,
@@ -61,39 +60,54 @@ fn ui_loop(mut window: Window) -> anyhow::Result<()> {
         },
         Colour::cream(),
         Colour::dark_green(),
-        sprite_sheet,
+        init_sprite_sheet(),
+        Player::Black,
     );
-    let mut floating_piece = None;
+
+    let mut game_state = GameState::new();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         board.draw(&mut buf);
+        game_state.update(&window);
 
-        let mouse_pos = window.get_mouse_pos(MouseMode::Discard);
-
-        if window.get_mouse_down(MouseButton::Left) {
-            if let Some((mouse_x, mouse_y)) = mouse_pos {
-                let mouse_x = mouse_x.floor() as u32;
-                let mouse_y = mouse_y.floor() as u32;
-                if let Some((offset_x, offset_y)) = floating_piece {
-                    board.draw_taken_piece(
-                        mouse_x.saturating_sub(offset_x),
-                        mouse_y.saturating_sub(offset_y),
-                        &mut buf,
-                    );
-                    // TODO: good UX
-                    // board.highlight_square_at(mouse_x, mouse_y, buf);
-                } else {
-                    if board.take_piece_at(mouse_x, mouse_y).is_some() {
-                        floating_piece = Some((mouse_x % 90, mouse_y % 90));
+        if game_state.is_left_mouse_down {
+            if let Some((mouse_x, mouse_y)) = game_state.mouse_pos {
+                match game_state.floating_piece {
+                    Some((offset_x, offset_y)) => {
+                        board.draw_taken_piece(
+                            mouse_x.saturating_sub(offset_x),
+                            mouse_y.saturating_sub(offset_y),
+                            &mut buf,
+                        );
+                        // TODO: good UX
+                        // board.highlight_square_at(mouse_x, mouse_y, buf);
+                    }
+                    None => {
+                        if board.take_piece_at(mouse_x, mouse_y).is_some() {
+                            game_state.floating_piece = Some((mouse_x % 90, mouse_y % 90));
+                        }
                     }
                 }
             }
         } else {
-            if floating_piece.is_some() {
-                board.return_taken_piece();
-                floating_piece = None;
+            if game_state.floating_piece.is_some() {
+                match game_state
+                    .mouse_pos
+                    .and_then(|(x, y)| board.get_square(x, y))
+                {
+                    Some(sq) => {
+                        if !board.make_move_to(sq) {
+                            board.return_taken_piece();
+                        }
+                    }
+                    None => {
+                        board.return_taken_piece();
+                    }
+                }
+                game_state.floating_piece = None;
             }
         }
+
         window.update_with_buffer(buf.as_slice(), WINDOW_WIDTH, WINDOW_HEIGHT)?;
     }
     Ok(())
@@ -136,8 +150,25 @@ fn init_sprite_sheet() -> SpriteSheet<&'static str, Bitmap> {
     sprite_sheet
 }
 
-fn sq_to_coords(sq: SQ) -> (u32, u32) {
-    let x = sq.file() as u32;
-    let y = sq.rank() as u32;
-    (x, y)
+struct GameState {
+    floating_piece: Option<(u32, u32)>,
+    mouse_pos: Option<(u32, u32)>,
+    is_left_mouse_down: bool,
+}
+
+impl GameState {
+    pub fn new() -> Self {
+        Self {
+            floating_piece: None,
+            mouse_pos: None,
+            is_left_mouse_down: false,
+        }
+    }
+
+    pub fn update(&mut self, window: &Window) {
+        self.mouse_pos = window
+            .get_mouse_pos(MouseMode::Discard)
+            .map(|(x, y)| (x.round() as u32, y.round() as u32));
+        self.is_left_mouse_down = window.get_mouse_down(MouseButton::Left);
+    }
 }
