@@ -30,15 +30,10 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn offset_x(&self, offset_x: u32) -> Self {
+    pub fn offset_xy(&self, x: u32, y: u32) -> Self {
         Self {
-            x: self.x + offset_x,
-            ..*self
-        }
-    }
-    pub fn offset_y(&self, offset_y: u32) -> Self {
-        Self {
-            y: self.y + offset_y,
+            x: self.x + x,
+            y: self.y + y,
             ..*self
         }
     }

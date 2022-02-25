@@ -3,7 +3,6 @@ mod board;
 mod colour;
 mod drawable;
 mod palette;
-mod png;
 mod rect;
 mod sprite;
 
@@ -11,7 +10,6 @@ use crate::bitmap::Bitmap;
 use crate::board::ChessBoard;
 use crate::colour::Colour;
 use crate::drawable::{Drawable, FrameBuffer};
-use crate::png::Png;
 use crate::rect::{Frame, Rect};
 use crate::sprite::SpriteSheet;
 use minifb::{
@@ -60,15 +58,20 @@ fn ui_loop(mut window: Window) -> anyhow::Result<()> {
         },
         Colour::cream(),
         Colour::dark_green(),
-        init_sprite_sheet(),
+        init_pieces_sprite(),
         Player::Black,
     );
 
     let mut game_state = GameState::new();
 
+    let ls = init_letters_sprite();
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         board.draw(&mut buf);
         game_state.update(&window);
+        ls.get_sprite_drawable(&'A', 100, 100)
+            .unwrap()
+            .draw(&mut buf);
 
         if game_state.is_left_mouse_down {
             if let Some((mouse_x, mouse_y)) = game_state.mouse_pos {
@@ -113,40 +116,47 @@ fn ui_loop(mut window: Window) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn init_sprite_sheet() -> SpriteSheet<&'static str, Bitmap> {
-    let image = Bitmap::from_bytes(include_bytes!("../../assets/sprite.bmp")).unwrap();
-    // let image = Png::from_bytes(include_bytes!("../../assets/sprite.png"))?;
+fn init_pieces_sprite() -> SpriteSheet<&'static str, Bitmap> {
+    let image =
+        Bitmap::from_reader(&mut include_bytes!("../../assets/pieces.bmp").as_slice()).unwrap();
     let mut sprite_sheet = SpriteSheet::new(image);
     let pieces = Frame {
         x: 0,
-        y: 93,
+        y: 0,
         w: 90,
         h: 90,
     };
     sprite_sheet
-        // TODO: we get funny colour values from the bitmap, ignoring this rgba value
-        .ignore_colour(Colour::from_rgba(14128226))
-        .add_area("king-black", pieces.offset_x(90).offset_y(90))
-        .add_area("queen-black", pieces.offset_x(180).offset_y(90))
-        .add_area("rook-black", pieces.offset_x(270).offset_y(90))
-        .add_area("bishop-black", pieces.offset_x(360).offset_y(90))
-        .add_area("knight-black", pieces.offset_y(180))
-        .add_area("pawn-black", pieces.offset_x(90).offset_y(180))
+        .ignore_colour(Colour::green())
         .add_area("king-white", pieces)
-        .add_area("queen-white", pieces.offset_x(90))
-        .add_area("rook-white", pieces.offset_x(180))
-        .add_area("bishop-white", pieces.offset_x(270))
-        .add_area("knight-white", pieces.offset_x(360))
-        .add_area("pawn-white", pieces.offset_y(90))
-        .add_area(
-            "icons",
-            Frame {
-                x: 0,
-                y: 360,
-                w: 135,
-                h: 46,
-            },
-        );
+        .add_area("queen-white", pieces.offset_xy(90, 0))
+        .add_area("rook-white", pieces.offset_xy(180, 0))
+        .add_area("bishop-white", pieces.offset_xy(270, 0))
+        .add_area("knight-white", pieces.offset_xy(360, 0))
+        .add_area("pawn-white", pieces.offset_xy(0, 90))
+        .add_area("king-black", pieces.offset_xy(90, 90))
+        .add_area("queen-black", pieces.offset_xy(180, 90))
+        .add_area("rook-black", pieces.offset_xy(270, 90))
+        .add_area("bishop-black", pieces.offset_xy(360, 90))
+        .add_area("knight-black", pieces.offset_xy(0, 180))
+        .add_area("pawn-black", pieces.offset_xy(90, 180));
+    sprite_sheet
+}
+
+fn init_letters_sprite() -> SpriteSheet<char, Bitmap> {
+    let image =
+        Bitmap::from_reader(&mut include_bytes!("../../assets/letters.bmp").as_slice()).unwrap();
+    let mut sprite_sheet = SpriteSheet::new(image);
+    let letters = Frame {
+        x: 0,
+        y: 0,
+        w: 17,
+        h: 17,
+    };
+    sprite_sheet.ignore_colour(Colour::green());
+    for (i, ch) in ('A'..'Z').enumerate() {
+        sprite_sheet.add_area(ch, letters.offset_xy(i as u32 * 17, 0));
+    }
     sprite_sheet
 }
 

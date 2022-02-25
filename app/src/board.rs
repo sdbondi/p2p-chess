@@ -1,5 +1,5 @@
 use crate::{Bitmap, Colour, Drawable, Frame, FrameBuffer, Rect, SpriteSheet};
-use pleco::{BitMove, Board, File, Piece, Player, Rank, SQ};
+use pleco::{BitMove, Board, File, Piece, PieceType, Player, Rank, SQ};
 use std::mem::transmute;
 
 pub struct ChessBoard {
@@ -20,19 +20,12 @@ impl ChessBoard {
         sprite_sheet: SpriteSheet<&'static str, Bitmap>,
         player: Player,
     ) -> Self {
-        let board = match player {
-            Player::White => {
-                Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
-            }
-            Player::Black => {
-                Board::from_fen("RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr w KQkq - 0 1").unwrap()
-            }
-        };
         Self {
             frame,
             light_colour,
             dark_colour,
-            board,
+            board: Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+                .unwrap(),
             sprite_sheet,
             player,
             taken_piece: None,
@@ -40,7 +33,7 @@ impl ChessBoard {
     }
 
     pub fn take_piece_at(&mut self, x: u32, y: u32) -> Option<pleco::Piece> {
-        let sq = coords_to_sq(x, y, self.player == Player::Black)?;
+        let sq = self.coords_to_sq(x, y)?;
         match self.board.piece_at_sq(sq) {
             Piece::None => None,
             p => {
@@ -61,6 +54,7 @@ impl ChessBoard {
                 .iter()
                 .find(|m| m.get_src() == src && m.get_dest() == dest)
             {
+                dbg!(src.to_string(), dest.to_string(), mv.to_string());
                 self.board.apply_move(*mv);
                 return true;
             }
@@ -70,7 +64,7 @@ impl ChessBoard {
     }
 
     pub fn get_square(&self, x: u32, y: u32) -> Option<SQ> {
-        coords_to_sq(x, y, self.player == Player::Black)
+        self.coords_to_sq(x, y)
     }
 
     fn draw_squares(&self, buf: &mut FrameBuffer) {
@@ -111,20 +105,58 @@ impl ChessBoard {
             {
                 continue;
             }
-            let (x, y) = sq_to_coords(sq, self.player == Player::Black);
+            let (x, y) = self.sq_to_coords(sq);
             self.draw_piece(piece, x, y, 0xff, buf);
         }
     }
 
-    fn draw_piece(&self, piece: Piece, x: u32, y: u32, alpha: u8, buf: &mut FrameBuffer) {
+    fn draw_piece(&self, mut piece: Piece, x: u32, y: u32, _: u8, buf: &mut FrameBuffer) {
         let name = piece_to_sprite_name(piece);
-        self.sprite_sheet.get_sprite(&name, x, y).unwrap().draw(buf);
+        self.sprite_sheet
+            .get_sprite_drawable(&name, x, y)
+            .unwrap()
+            .draw(buf);
     }
 
     pub fn draw_taken_piece(&self, x: u32, y: u32, buf: &mut FrameBuffer) {
         if let Some((_, piece)) = self.taken_piece {
-            self.draw_piece(piece, x, y, 0x77, buf);
+            self.draw_piece(piece, x, y, 0xff, buf);
         }
+    }
+
+    fn sq_to_coords(&self, sq: SQ) -> (u32, u32) {
+        let x = if self.player == Player::White {
+            sq.file() as u32
+        } else {
+            File::H as u32 - sq.file() as u32
+        };
+        let y = if self.player == Player::White {
+            Rank::R8 as u32 - sq.rank() as u32
+        } else {
+            sq.rank() as u32
+        };
+        (x * 90, y * 90)
+    }
+
+    fn coords_to_sq(&self, mut x: u32, mut y: u32) -> Option<SQ> {
+        x /= 90;
+        y /= 90;
+        if x > 7 || y > 7 {
+            return None;
+        }
+
+        let file = if self.player == Player::White {
+            x as u8
+        } else {
+            File::H as u8 - x as u8
+        };
+        let rank = if self.player == Player::White {
+            Rank::R8 as u8 - y as u8
+        } else {
+            y as u8
+        };
+        let sq = unsafe { transmute::<u8, SQ>(file + (rank << 3)) };
+        Some(sq)
     }
 }
 
@@ -133,33 +165,6 @@ impl Drawable for ChessBoard {
         self.draw_squares(buf);
         self.draw_pieces(buf);
     }
-}
-
-fn sq_to_coords(sq: SQ, rank_inv: bool) -> (u32, u32) {
-    let x = sq.file() as u32;
-    let y = if rank_inv {
-        Rank::R8 as u32 - sq.rank() as u32
-    } else {
-        sq.rank() as u32
-    };
-    (x * 90, y * 90)
-}
-
-fn coords_to_sq(mut x: u32, mut y: u32, rank_inv: bool) -> Option<SQ> {
-    x /= 90;
-    y /= 90;
-    if x > 7 || y > 7 {
-        return None;
-    }
-
-    let file = x as u8;
-    let rank = if rank_inv {
-        Rank::R8 as u8 - y as u8
-    } else {
-        y as u8
-    };
-    let sq = unsafe { transmute::<u8, SQ>(file + (rank << 3)) };
-    Some(sq)
 }
 
 fn piece_to_sprite_name(piece: pleco::Piece) -> &'static str {
@@ -178,5 +183,24 @@ fn piece_to_sprite_name(piece: pleco::Piece) -> &'static str {
         BlackRook => "rook-black",
         BlackQueen => "queen-black",
         BlackKing => "king-black",
+    }
+}
+
+fn invert_colour(piece: Piece) -> Piece {
+    use Piece::*;
+    match piece {
+        None => None,
+        WhitePawn => BlackPawn,
+        WhiteKnight => BlackKnight,
+        WhiteBishop => BlackBishop,
+        WhiteRook => BlackRook,
+        WhiteQueen => BlackQueen,
+        WhiteKing => BlackKing,
+        BlackPawn => WhitePawn,
+        BlackKnight => WhiteKnight,
+        BlackBishop => WhiteBishop,
+        BlackRook => WhiteRook,
+        BlackQueen => WhiteQueen,
+        BlackKing => WhiteKing,
     }
 }

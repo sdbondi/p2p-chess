@@ -28,7 +28,7 @@ impl<K: Hash + Eq, I: GetRgba> SpriteSheet<K, I> {
         self
     }
 
-    pub fn get_sprite(&self, name: &K, x: u32, y: u32) -> Option<DrawableSprite<'_, I>> {
+    pub fn get_sprite_drawable(&self, name: &K, x: u32, y: u32) -> Option<DrawableSprite<'_, I>> {
         self.areas.get(name).map(|area| DrawableSprite::<'_, I> {
             image: &self.image,
             area,
@@ -52,7 +52,7 @@ impl<I: GetRgba> Drawable for DrawableSprite<'_, I> {
         let mut offset_x = 0;
         let mut offset_y = 0;
         self.area.scan(|x, y| {
-            let px = self.image.get_rgba(x as usize, y as usize); // as u32;
+            let px = self.image.get_rgba(x as usize, y as usize);
 
             offset_x += 1;
             if offset_x % (self.area.w as usize + 1) == 0 {
