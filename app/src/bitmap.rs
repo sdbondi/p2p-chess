@@ -1,8 +1,9 @@
 use crate::sprite::GetRgba;
-use crate::Colour;
+use crate::Color;
 use bmp::Pixel;
 use std::io::Read;
 
+#[derive(Debug)]
 pub struct Bitmap {
     image: bmp::Image,
 }
@@ -21,5 +22,5 @@ impl GetRgba for Bitmap {
 }
 
 fn to_rgb(pixel: Pixel) -> u32 {
-    Colour::new(pixel.r, pixel.g, pixel.b, 0xff).to_rgba()
+    Color::new(pixel.r, pixel.g, pixel.b, 0xff).to_rgba()
 }

@@ -1,23 +1,27 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Colour {
+pub struct Color {
     pub r: u8,
     pub g: u8,
     pub b: u8,
     pub a: u8,
 }
 
-impl Colour {
+impl Color {
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
 
     pub fn to_rgba(&self) -> u32 {
+        let a = self.a as u32;
+        self.to_rgb() + (a << 24)
+    }
+
+    pub fn to_rgb(&self) -> u32 {
         let r = self.r as u32;
         let g = self.g as u32;
         let b = self.b as u32;
-        let a = self.a as u32;
 
-        b + (g << 8) + (r << 16) + (a << 24)
+        b + (g << 8) + (r << 16)
     }
 
     pub fn from_rgba(v: u32) -> Self {
@@ -34,7 +38,7 @@ impl Colour {
     }
 }
 
-impl Colour {
+impl Color {
     pub const fn white() -> Self {
         Self {
             r: 0xff,
@@ -71,6 +75,23 @@ impl Colour {
         }
     }
 
+    pub const fn grey(v: u8) -> Self {
+        Self {
+            r: v,
+            g: v,
+            b: v,
+            a: 0xff,
+        }
+    }
+
+    pub const fn light_grey() -> Self {
+        Self::grey(0x90)
+    }
+
+    pub const fn dark_grey() -> Self {
+        Self::grey(0x50)
+    }
+
     pub const fn cream() -> Self {
         Self {
             r: 234,
@@ -87,8 +108,8 @@ mod test {
 
     #[test]
     fn it_is_created_from_rgb() {
-        let c = Colour::new(0xfe, 0xfd, 0xfc, 0x05);
-        let c1 = Colour::from_rgba(c.to_rgba());
+        let c = Color::new(0xfe, 0xfd, 0xfc, 0x05);
+        let c1 = Color::from_rgba(c.to_rgba());
         assert_eq!(c1, c);
     }
 }

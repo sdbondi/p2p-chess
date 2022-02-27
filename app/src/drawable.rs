@@ -1,10 +1,10 @@
-use crate::Colour;
+use crate::Color;
 use std::cmp;
 use std::collections::Bound;
 use std::ops::RangeBounds;
 
 pub trait Drawable {
-    fn draw(&self, buf: &mut FrameBuffer);
+    fn draw(&mut self, buf: &mut FrameBuffer);
 }
 
 pub struct FrameBuffer {
@@ -14,9 +14,9 @@ pub struct FrameBuffer {
 }
 
 impl FrameBuffer {
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn new(width: usize, height: usize, background_color: Color) -> Self {
         Self {
-            buf: vec![0; width * height],
+            buf: vec![background_color.to_rgba(); width * height],
             width,
             height,
         }
@@ -37,7 +37,7 @@ impl FrameBuffer {
         self
     }
 
-    pub fn clear(&mut self, colour: Colour) -> &mut Self {
+    pub fn clear(&mut self, colour: Color) -> &mut Self {
         self.buf[..].fill(colour.to_rgba());
         self
     }

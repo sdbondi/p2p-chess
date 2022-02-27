@@ -1,11 +1,11 @@
-use crate::{Bitmap, Colour, Drawable, Frame, FrameBuffer, Rect, SpriteSheet};
-use pleco::{BitMove, Board, File, Piece, PieceType, Player, Rank, SQ};
+use crate::{Bitmap, Color, Drawable, Frame, FrameBuffer, Rect, SpriteSheet};
+use pleco::{Board, File, Piece, Player, Rank, SQ};
 use std::mem::transmute;
 
 pub struct ChessBoard {
     frame: Frame,
-    light_colour: Colour,
-    dark_colour: Colour,
+    light_colour: Color,
+    dark_colour: Color,
     board: Board,
     sprite_sheet: SpriteSheet<&'static str, Bitmap>,
     player: Player,
@@ -15,8 +15,8 @@ pub struct ChessBoard {
 impl ChessBoard {
     pub fn new(
         frame: Frame,
-        light_colour: Colour,
-        dark_colour: Colour,
+        light_colour: Color,
+        dark_colour: Color,
         sprite_sheet: SpriteSheet<&'static str, Bitmap>,
         player: Player,
     ) -> Self {
@@ -161,7 +161,7 @@ impl ChessBoard {
 }
 
 impl Drawable for ChessBoard {
-    fn draw(&self, buf: &mut FrameBuffer) {
+    fn draw(&mut self, buf: &mut FrameBuffer) {
         self.draw_squares(buf);
         self.draw_pieces(buf);
     }
