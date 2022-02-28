@@ -1,4 +1,4 @@
-use crate::Color;
+use crate::color::Color;
 use std::cmp;
 use std::collections::Bound;
 use std::ops::RangeBounds;
@@ -9,31 +9,32 @@ pub trait Drawable {
 
 pub struct FrameBuffer {
     buf: Vec<u32>,
-    width: usize,
-    height: usize,
+    width: u32,
+    height: u32,
 }
 
 impl FrameBuffer {
-    pub fn new(width: usize, height: usize, background_color: Color) -> Self {
+    pub fn new(width: u32, height: u32, background_color: Color) -> Self {
         Self {
-            buf: vec![background_color.to_rgba(); width * height],
+            buf: vec![background_color.to_rgba(); width as usize * height as usize],
             width,
             height,
         }
     }
 
-    pub fn put_pixel(&mut self, x: usize, y: usize, val: u32) -> &mut Self {
-        let pos = x + y * self.width;
+    pub fn put_pixel(&mut self, x: u32, y: u32, val: u32) -> &mut Self {
+        let pos = (x + y * self.width) as usize;
         if pos < self.buf.len() {
             self.buf[pos] = val;
         }
         self
     }
 
-    pub fn put_line(&mut self, x: usize, y: usize, width: usize, val: u32) -> &mut Self {
+    pub fn put_line(&mut self, x: u32, y: u32, width: u32, val: u32) -> &mut Self {
         let offset_y = self.width * y;
-        self.as_slice_mut(x + offset_y..=x + offset_y + width)
-            .fill(val);
+        let start = (x + offset_y) as usize;
+        let end = (x + offset_y + width) as usize;
+        self.as_slice_mut(start..=end).fill(val);
         self
     }
 

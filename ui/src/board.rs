@@ -1,4 +1,8 @@
-use crate::{Bitmap, Color, Drawable, Frame, FrameBuffer, Rect, SpriteSheet};
+use crate::bitmap::Bitmap;
+use crate::color::Color;
+use crate::drawable::{Drawable, FrameBuffer};
+use crate::rect::{Frame, Rect};
+use crate::sprite::SpriteSheet;
 use pleco::{Board, File, Piece, Player, Rank, SQ};
 use std::mem::transmute;
 
@@ -71,10 +75,12 @@ impl ChessBoard {
         for x in 0..8 {
             for y in 0..8 {
                 Rect::new(
-                    x * self.frame.w / 8,
-                    y * self.frame.h / 8,
-                    self.frame.w / 8,
-                    self.frame.h / 8,
+                    Frame::new(
+                        x * self.frame.w / 8,
+                        y * self.frame.h / 8,
+                        self.frame.w / 8,
+                        self.frame.h / 8,
+                    ),
                     if y % 2 == 0 {
                         if x % 2 == 0 {
                             self.light_colour

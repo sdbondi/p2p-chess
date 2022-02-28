@@ -1,4 +1,9 @@
-use crate::{Bitmap, ChessBoard, Color, Drawable, Frame, FrameBuffer, SpriteSheet};
+use crate::bitmap::Bitmap;
+use crate::board::ChessBoard;
+use crate::color::Color;
+use crate::drawable::{Drawable, FrameBuffer};
+use crate::rect::Frame;
+use crate::sprite::SpriteSheet;
 use minifb::{MouseButton, MouseMode, Window};
 use pleco::Player;
 
@@ -113,7 +118,7 @@ impl Default for GameState {
 
 fn init_pieces_sprite() -> SpriteSheet<&'static str, Bitmap> {
     let image =
-        Bitmap::from_reader(&mut include_bytes!("../../assets/pieces.bmp").as_slice()).unwrap();
+        Bitmap::from_reader(&mut include_bytes!("../assets/pieces.bmp").as_slice()).unwrap();
     let mut sprite_sheet = SpriteSheet::new(image);
     let pieces = Frame {
         x: 0,

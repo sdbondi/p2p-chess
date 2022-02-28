@@ -1,12 +1,15 @@
 [package]
-name = "p2p-chess"
+name = "ui"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ui = { path = "../ui" }
-
 anyhow = "1.0.41"
-tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
+bmp = "0.5.0"
+kira = "0.5.3"
+minifb = "0.19.3"
+rand = "0.8.4"
+pleco = "0.5.0"
+clipboard = "0.5.0"

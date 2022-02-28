@@ -1,4 +1,6 @@
-use crate::{Color, Drawable, Frame, FrameBuffer};
+use crate::color::Color;
+use crate::drawable::{Drawable, FrameBuffer};
+use crate::rect::Frame;
 use std::collections::HashMap;
 use std::hash::Hash;
 
@@ -64,7 +66,7 @@ impl<I: GetRgba> Drawable for DrawableSprite<'_, I> {
             let mut px = self.image.get_rgba(x as usize, y as usize);
 
             offset_x += 1;
-            if offset_x % (self.area.w as usize + 1) == 0 {
+            if offset_x % (self.area.w + 1) == 0 {
                 offset_x = 0;
                 offset_y += 1;
             }
@@ -80,13 +82,10 @@ impl<I: GetRgba> Drawable for DrawableSprite<'_, I> {
                     px = to.to_rgba();
                 }
             }
-            buf.put_pixel(
-                offset_x + self.x as usize,
-                offset_y + self.y as usize,
-                px as u32,
-            );
+            buf.put_pixel(offset_x + self.x, offset_y + self.y, px);
+
             true
-        })
+        });
     }
 }
 

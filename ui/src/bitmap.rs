@@ -1,5 +1,5 @@
+use crate::color::Color;
 use crate::sprite::GetRgba;
-use crate::Color;
 use bmp::Pixel;
 use std::io::Read;
 

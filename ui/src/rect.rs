@@ -1,28 +1,29 @@
+use crate::color::Color;
 use crate::drawable::{Drawable, FrameBuffer};
-use crate::Color;
 
 pub struct Rect {
     frame: Frame,
     bg_color: Color,
-    border_size: usize,
+    border_size: u32,
     border_color: Color,
 }
 
 impl Rect {
-    pub fn new(x: u32, y: u32, w: u32, h: u32, bg_color: Color) -> Self {
+    pub fn new(frame: Frame, bg_color: Color) -> Self {
         Self {
-            frame: Frame { x, y, w, h },
+            frame,
             bg_color,
             border_size: 0,
             border_color: Color::black(),
         }
     }
+
     pub fn set_bg_colour(&mut self, color: Color) -> &mut Self {
         self.bg_color = color;
         self
     }
 
-    pub fn set_border(&mut self, size: usize, color: Color) -> &mut Self {
+    pub fn set_border(&mut self, size: u32, color: Color) -> &mut Self {
         self.border_size = size;
         self.border_color = color;
         self
@@ -65,6 +66,10 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub fn new(x: u32, y: u32, w: u32, h: u32) -> Self {
+        Self { x, y, w, h }
+    }
+
     pub fn is_in_boundary(&self, x: u32, y: u32) -> bool {
         x >= self.x && x <= self.x + self.w && y >= self.y && y <= self.y + self.h
     }
@@ -82,28 +87,21 @@ impl Frame {
 
 impl Frame {
     pub fn fill(&self, val: u32, buf: &mut FrameBuffer) {
-        let x = self.x as usize;
-        let y = self.y as usize;
-        let w = self.w as usize;
         let h = self.h as usize;
         for i in 0..=h {
-            buf.put_line(x, y + i, w, val);
+            buf.put_line(self.x, self.y + i as u32, self.w, val);
         }
     }
 
-    pub fn draw_border(&self, size: usize, color: Color, buf: &mut FrameBuffer) {
-        let x = self.x as usize;
-        let y = self.y as usize;
-        let w = self.w as usize;
-        let h = self.h as usize;
-        let bottom = h.saturating_sub(size);
+    pub fn draw_border(&self, size: u32, color: Color, buf: &mut FrameBuffer) {
+        let bottom = self.h.saturating_sub(size);
         let color = color.to_rgba();
-        for i in 0..=h {
+        for i in 0..=self.h {
             if i < size || i > bottom {
-                buf.put_line(x, y + i, w, color);
+                buf.put_line(self.x, self.y + i, self.w, color);
             } else {
-                buf.put_line(x, y + i, size, color);
-                buf.put_line(x + w - size, y + i, size, color);
+                buf.put_line(self.x, self.y + i, size, color);
+                buf.put_line(self.x + self.w - size, self.y + i, size, color);
             }
         }
     }
