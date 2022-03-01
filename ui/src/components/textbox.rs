@@ -5,6 +5,7 @@ use crate::letters::Letters;
 use crate::rect::{Frame, Rect};
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window};
 
+#[derive(Debug)]
 pub struct TextBox {
     value: String,
     text_color: Color,

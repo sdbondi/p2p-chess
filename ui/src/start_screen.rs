@@ -6,51 +6,80 @@ use crate::letters::Letters;
 use crate::rect::{Frame, Rect};
 use minifb::Window;
 
+#[derive(Debug)]
+pub struct Drawables<T> {
+    items: Vec<T>,
+}
+
+impl<T: Drawable> Drawable for Drawables<T> {
+    fn draw(&mut self, buf: &mut FrameBuffer) {
+        for item in self.items.iter_mut() {
+            item.draw(buf);
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct StartScreen {
     public_key_input: TextBox,
-    button: Button,
-    label: Label,
+    start_button: Button,
+    labels: Drawables<Label>,
+    submitted_public_key: Option<String>,
 }
 
 impl StartScreen {
-    pub fn new(clipboard: Clipboard) -> Self {
+    pub fn new(clipboard: Clipboard, public_key: &str) -> Self {
         let letters = Letters::new();
-        let public_key_input =
-            TextBox::new(Frame::new(10, 50, 750, 40), letters.clone(), clipboard);
-        let mut button = Button::new(
-            Rect::new(Frame::new(10, 100, 100, 30), Color::cream()),
-            letters.clone(),
-        );
-        button.set_text("OK");
 
-        let mut label = Label::new(Frame::new(10, 10, 500, 40), letters);
-        label.set_text("Enter player public key");
+        let mut title_label = Label::new(Frame::new(495, 10, 500, 40), letters.clone());
+        title_label
+            .set_text("P2P Chess")
+            .set_text_color(Color::dark_green());
+
+        let mut my_pk_label = Label::new(Frame::new(10, 50, 500, 40), letters.clone());
+        my_pk_label
+            .set_text(format!("Player public key {}", public_key))
+            .set_text_color(Color::light_grey());
+
+        let mut enter_pk_label = Label::new(Frame::new(10, 100, 500, 40), letters.clone());
+        enter_pk_label.set_text("Enter player public key");
+        let labels = Drawables {
+            items: vec![title_label, my_pk_label, enter_pk_label],
+        };
+
+        let public_key_input =
+            TextBox::new(Frame::new(10, 150, 750, 40), letters.clone(), clipboard);
+        let mut start_button = Button::new(
+            Rect::new(Frame::new(10, 200, 100, 30), Color::white()),
+            letters,
+        );
+        start_button.set_text("New Game");
 
         Self {
             public_key_input,
-            button,
-            label,
+            start_button,
+            labels,
+            submitted_public_key: None,
         }
-    }
-
-    pub fn on_submitted<H: FnMut(String) + 'static>(&mut self, mut handler: H) -> &mut Self {
-        self.button.on_click(move || {
-            // let value = self.public_key_input.value().to_string();
-            handler("todo".to_string())
-        });
-        self
     }
 
     pub fn update(&mut self, window: &Window) {
         self.public_key_input.update(window);
-        self.button.update(window);
+        self.start_button.update(window);
+        if self.start_button.was_clicked() {
+            self.submitted_public_key = Some(self.public_key_input.value().to_string())
+        }
+    }
+
+    pub fn submitted_public_key_str(&self) -> Option<&str> {
+        self.submitted_public_key.as_deref()
     }
 }
 
 impl Drawable for StartScreen {
     fn draw(&mut self, buf: &mut FrameBuffer) {
         self.public_key_input.draw(buf);
-        self.button.draw(buf);
-        self.label.draw(buf);
+        self.start_button.draw(buf);
+        self.labels.draw(buf);
     }
 }

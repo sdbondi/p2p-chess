@@ -10,7 +10,6 @@ pub trait Drawable {
 pub struct FrameBuffer {
     buf: Vec<u32>,
     width: u32,
-    height: u32,
 }
 
 impl FrameBuffer {
@@ -18,7 +17,6 @@ impl FrameBuffer {
         Self {
             buf: vec![background_color.to_rgba(); width as usize * height as usize],
             width,
-            height,
         }
     }
 

@@ -3,6 +3,7 @@ use crate::drawable::{Drawable, FrameBuffer};
 use crate::letters::Letters;
 use crate::rect::Frame;
 
+#[derive(Debug)]
 pub struct Label {
     text: String,
     text_color: Color,
@@ -22,6 +23,10 @@ impl Label {
 
     pub fn set_text<T: Into<String>>(&mut self, text: T) -> &mut Self {
         self.text = text.into();
+        self
+    }
+    pub fn set_text_color(&mut self, color: Color) -> &mut Self {
+        self.text_color = color;
         self
     }
 

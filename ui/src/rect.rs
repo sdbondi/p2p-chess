@@ -1,6 +1,7 @@
 use crate::color::Color;
 use crate::drawable::{Drawable, FrameBuffer};
 
+#[derive(Debug)]
 pub struct Rect {
     frame: Frame,
     bg_color: Color,

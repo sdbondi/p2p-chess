@@ -7,12 +7,14 @@ use crate::sprite::SpriteSheet;
 use minifb::{MouseButton, MouseMode, Window};
 use pleco::Player;
 
-pub struct Game {
+#[derive(Debug)]
+pub struct GameScreen {
     state: GameState,
     board: ChessBoard,
+    floating_piece: Option<(u32, u32)>,
 }
 
-impl Game {
+impl GameScreen {
     pub fn new(config: GameConfig) -> Self {
         Self {
             state: GameState::default(),
@@ -26,8 +28,9 @@ impl Game {
                 config.light_color,
                 config.dark_color,
                 init_pieces_sprite(),
-                Player::White,
+                Player::Black,
             ),
+            floating_piece: None,
         }
     }
 
@@ -53,13 +56,13 @@ impl Game {
     }
 }
 
-impl Drawable for Game {
+impl Drawable for GameScreen {
     fn draw(&mut self, buf: &mut FrameBuffer) {
         self.board.draw(buf);
 
         if self.state.is_left_mouse_down {
             if let Some((mouse_x, mouse_y)) = self.state.mouse_pos {
-                match self.state.floating_piece {
+                match self.floating_piece {
                     Some((offset_x, offset_y)) => {
                         self.board.draw_taken_piece(
                             mouse_x.saturating_sub(offset_x),
@@ -71,13 +74,13 @@ impl Drawable for Game {
                     }
                     None => {
                         if self.board.take_piece_at(mouse_x, mouse_y).is_some() {
-                            self.state.floating_piece = Some((mouse_x % 90, mouse_y % 90));
+                            self.floating_piece = Some((mouse_x % 90, mouse_y % 90));
                         }
                     }
                 }
             }
         } else {
-            if self.state.floating_piece.is_some() {
+            if self.floating_piece.is_some() {
                 match self
                     .state
                     .mouse_pos
@@ -92,12 +95,13 @@ impl Drawable for Game {
                         self.board.return_taken_piece();
                     }
                 }
-                self.state.floating_piece = None;
+                self.floating_piece = None;
             }
         }
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct GameConfig {
     pub window_width: u32,
     pub window_height: u32,
@@ -105,8 +109,8 @@ pub struct GameConfig {
     pub dark_color: Color,
 }
 
+#[derive(Debug)]
 pub struct GameState {
-    floating_piece: Option<(u32, u32)>,
     mouse_pos: Option<(u32, u32)>,
     is_left_mouse_down: bool,
     game_status: GameStatus,
@@ -115,7 +119,6 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> Self {
         Self {
-            floating_piece: None,
             mouse_pos: None,
             is_left_mouse_down: false,
             game_status: Default::default(),

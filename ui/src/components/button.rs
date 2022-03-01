@@ -1,16 +1,16 @@
 use crate::color::Color;
-use crate::components::handler::ClickHandler;
 use crate::drawable::{Drawable, FrameBuffer};
 use crate::letters::Letters;
 use crate::rect::Rect;
 use minifb::{MouseButton, MouseMode, Window};
 
+#[derive(Debug)]
 pub struct Button {
     rect: Rect,
     text: String,
     letters: Letters,
     is_disabled: bool,
-    on_click: Option<Box<dyn ClickHandler>>,
+    click: Option<()>,
 }
 
 impl Button {
@@ -18,9 +18,9 @@ impl Button {
         Self {
             rect,
             text: "Button".to_string(),
-            on_click: None,
             is_disabled: false,
             letters,
+            click: None,
         }
     }
 
@@ -34,21 +34,19 @@ impl Button {
         self
     }
 
-    pub fn on_click<H: ClickHandler + 'static>(&mut self, handler: H) -> &mut Self {
-        self.on_click = Some(Box::new(handler));
-        self
+    pub fn was_clicked(&mut self) -> bool {
+        self.click.take().is_some()
     }
 
     pub fn update(&mut self, window: &Window) {
         if self.is_disabled {
             return;
         }
-        if let Some(ref mut on_click) = self.on_click {
-            if window.get_mouse_down(MouseButton::Left) {
-                if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-                    if self.rect.is_in_boundary(x.round() as u32, y.round() as u32) {
-                        on_click.handle_click();
-                    }
+
+        if window.get_mouse_down(MouseButton::Left) {
+            if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
+                if self.rect.is_in_boundary(x.round() as u32, y.round() as u32) {
+                    self.click = Some(());
                 }
             }
         }

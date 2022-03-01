@@ -3,9 +3,11 @@ use crate::color::Color;
 use crate::drawable::{Drawable, FrameBuffer};
 use crate::rect::{Frame, Rect};
 use crate::sprite::SpriteSheet;
-use pleco::{Board, File, Piece, Player, Rank, SQ};
+use pleco::core::CastleType;
+use pleco::{BitMove, Board, File, Piece, Player, Rank, SQ};
 use std::mem::transmute;
 
+#[derive(Debug)]
 pub struct ChessBoard {
     frame: Frame,
     light_colour: Color,
@@ -61,10 +63,61 @@ impl ChessBoard {
                 dbg!(src.to_string(), dest.to_string(), mv.to_string());
                 self.board.apply_move(*mv);
                 return true;
+            } else {
+                if let Some(castle) = self.castle_move(src, dest) {
+                    dbg!(src.to_string(), dest.to_string(), castle);
+                    self.board.apply_move(castle);
+                    return true;
+                }
             }
         }
         self.return_taken_piece();
         false
+    }
+
+    pub fn castle_move(&self, src: SQ, dest: SQ) -> Option<BitMove> {
+        const CAPTURE: u16 = 1 << 13;
+        // TODO: I'm sure there's a compact way to do this
+        match self.player {
+            Player::White => {
+                if src == SQ::E1 {
+                    if dest == SQ::C1 && self.board.can_castle(self.player, CastleType::QueenSide) {
+                        let rook = self.board.castling_rook_square(CastleType::QueenSide);
+                        return Some(BitMove::make(
+                            BitMove::FLAG_QUEEN_CASTLE | CAPTURE,
+                            src,
+                            rook,
+                        ));
+                    }
+                    if dest == SQ::G1 && self.board.can_castle(self.player, CastleType::KingSide) {
+                        let rook = self.board.castling_rook_square(CastleType::KingSide);
+                        return Some(BitMove::make(
+                            BitMove::FLAG_KING_CASTLE | CAPTURE,
+                            src,
+                            rook,
+                        ));
+                    }
+                }
+            }
+            Player::Black => {
+                if src == SQ::E8 {
+                    if dest == SQ::C8 && self.board.can_castle(self.player, CastleType::QueenSide) {
+                        let rook = self.board.castling_rook_square(CastleType::QueenSide);
+                        let mv = BitMove::make(BitMove::FLAG_QUEEN_CASTLE | CAPTURE, src, rook);
+                        return Some(mv);
+                    }
+                    if dest == SQ::G8 && self.board.can_castle(self.player, CastleType::KingSide) {
+                        let rook = self.board.castling_rook_square(CastleType::KingSide);
+                        return Some(BitMove::make(
+                            BitMove::FLAG_KING_CASTLE | CAPTURE,
+                            src,
+                            rook,
+                        ));
+                    }
+                }
+            }
+        }
+        None
     }
 
     pub fn get_square(&self, x: u32, y: u32) -> Option<SQ> {
@@ -116,7 +169,7 @@ impl ChessBoard {
         }
     }
 
-    fn draw_piece(&self, mut piece: Piece, x: u32, y: u32, _: u8, buf: &mut FrameBuffer) {
+    fn draw_piece(&self, piece: Piece, x: u32, y: u32, _: u8, buf: &mut FrameBuffer) {
         let name = piece_to_sprite_name(piece);
         self.sprite_sheet
             .get_sprite_drawable(&name, x, y)

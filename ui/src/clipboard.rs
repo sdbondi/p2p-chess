@@ -1,5 +1,6 @@
 use clipboard::{ClipboardContext, ClipboardProvider};
 use std::cell::RefCell;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -21,5 +22,13 @@ impl Clipboard {
             .borrow_mut()
             .get_contents()
             .map_err(|err| anyhow::anyhow!("{}", err))
+    }
+}
+
+impl Debug for Clipboard {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Clipboard")
+            .field("clipboard", &"...")
+            .finish()
     }
 }
