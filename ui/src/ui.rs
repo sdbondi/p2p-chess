@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::drawable::FrameBuffer;
+use crate::events::{EventPublisher, EventSubscription};
 use crate::game::GameConfig;
 use crate::screen_manager::ScreenManager;
 use minifb::{Key, Window, WindowOptions};
@@ -12,6 +13,7 @@ pub struct ChessUi {
     window_width: usize,
     window_height: usize,
     opts: WindowOptions,
+    publisher: EventPublisher,
 }
 
 impl ChessUi {
@@ -26,7 +28,12 @@ impl ChessUi {
             window_width,
             window_height,
             opts,
+            publisher: EventPublisher::new(),
         }
+    }
+
+    pub fn subscribe(&self) -> EventSubscription {
+        self.publisher.subscribe()
     }
 
     pub fn run(self) -> anyhow::Result<()> {
@@ -54,7 +61,7 @@ impl ChessUi {
             dark_color: Color::dark_green(),
         };
 
-        let mut screen_manager = ScreenManager::initialize(config)?;
+        let mut screen_manager = ScreenManager::initialize(self.publisher.clone(), config)?;
         let mut should_exit = false;
         while window.is_open() && !should_exit {
             screen_manager.render(&window, &mut buf);

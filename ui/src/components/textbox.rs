@@ -74,7 +74,6 @@ impl TextBox {
             let mut is_shift = false;
             let mut char = None;
             for key in modifiers.into_iter().flatten() {
-                dbg!(key);
                 match key {
                     #[cfg(any(target_os = "windows", target_os = "linux"))]
                     Key::LeftCtrl | Key::RightCtrl => is_ctrl = true,
