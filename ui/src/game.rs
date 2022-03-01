@@ -26,13 +26,30 @@ impl Game {
                 config.light_color,
                 config.dark_color,
                 init_pieces_sprite(),
-                Player::Black,
+                Player::White,
             ),
         }
     }
 
     pub fn update(&mut self, window: &Window) {
         self.state.update(window);
+
+        if self.board.is_stalemate() {
+            self.state.set_game_status(GameStatus::StaleMate);
+        }
+
+        if self.board.is_draw() {
+            self.state.set_game_status(GameStatus::StaleMate);
+        }
+
+        if self.board.is_checkmate() {
+            self.state
+                .set_game_status(GameStatus::CheckMate(self.board.turn().other_player()));
+        }
+    }
+
+    pub fn state(&self) -> &GameState {
+        &self.state
     }
 }
 
@@ -88,10 +105,11 @@ pub struct GameConfig {
     pub dark_color: Color,
 }
 
-struct GameState {
+pub struct GameState {
     floating_piece: Option<(u32, u32)>,
     mouse_pos: Option<(u32, u32)>,
     is_left_mouse_down: bool,
+    game_status: GameStatus,
 }
 
 impl GameState {
@@ -100,6 +118,7 @@ impl GameState {
             floating_piece: None,
             mouse_pos: None,
             is_left_mouse_down: false,
+            game_status: Default::default(),
         }
     }
 
@@ -109,7 +128,17 @@ impl GameState {
             .map(|(x, y)| (x.round() as u32, y.round() as u32));
         self.is_left_mouse_down = window.get_mouse_down(MouseButton::Left);
     }
+
+    pub(crate) fn set_game_status(&mut self, status: GameStatus) -> &mut Self {
+        self.game_status = status;
+        self
+    }
+
+    pub fn game_status(&self) -> GameStatus {
+        self.game_status
+    }
 }
+
 impl Default for GameState {
     fn default() -> Self {
         Self::new()
@@ -141,4 +170,18 @@ fn init_pieces_sprite() -> SpriteSheet<&'static str, Bitmap> {
         .add_area("knight-black", pieces.offset_xy(0, 180))
         .add_area("pawn-black", pieces.offset_xy(90, 180));
     sprite_sheet
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum GameStatus {
+    InProgress,
+    StaleMate,
+    CheckMate(Player),
+    Resign(Player),
+}
+
+impl Default for GameStatus {
+    fn default() -> Self {
+        Self::InProgress
+    }
 }

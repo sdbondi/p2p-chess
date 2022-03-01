@@ -130,6 +130,23 @@ impl ChessBoard {
         }
     }
 
+    pub fn is_stalemate(&self) -> bool {
+        self.board.stalemate()
+    }
+
+    pub fn is_checkmate(&self) -> bool {
+        self.board.checkmate()
+    }
+
+    pub fn is_draw(&self) -> bool {
+        // 2 Kings remaining
+        self.board.count_all_pieces() <= 2
+    }
+
+    pub fn turn(&self) -> Player {
+        self.board.turn()
+    }
+
     fn sq_to_coords(&self, sq: SQ) -> (u32, u32) {
         let x = if self.player == Player::White {
             sq.file() as u32
@@ -192,21 +209,21 @@ fn piece_to_sprite_name(piece: pleco::Piece) -> &'static str {
     }
 }
 
-fn invert_colour(piece: Piece) -> Piece {
-    use Piece::*;
-    match piece {
-        None => None,
-        WhitePawn => BlackPawn,
-        WhiteKnight => BlackKnight,
-        WhiteBishop => BlackBishop,
-        WhiteRook => BlackRook,
-        WhiteQueen => BlackQueen,
-        WhiteKing => BlackKing,
-        BlackPawn => WhitePawn,
-        BlackKnight => WhiteKnight,
-        BlackBishop => WhiteBishop,
-        BlackRook => WhiteRook,
-        BlackQueen => WhiteQueen,
-        BlackKing => WhiteKing,
-    }
-}
+// fn invert_colour(piece: Piece) -> Piece {
+//     use Piece::*;
+//     match piece {
+//         None => None,
+//         WhitePawn => BlackPawn,
+//         WhiteKnight => BlackKnight,
+//         WhiteBishop => BlackBishop,
+//         WhiteRook => BlackRook,
+//         WhiteQueen => BlackQueen,
+//         WhiteKing => BlackKing,
+//         BlackPawn => WhitePawn,
+//         BlackKnight => WhiteKnight,
+//         BlackBishop => WhiteBishop,
+//         BlackRook => WhiteRook,
+//         BlackQueen => WhiteQueen,
+//         BlackKing => WhiteKing,
+//     }
+// }

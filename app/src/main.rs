@@ -1,16 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::mpsc;
 use std::time::Duration;
-use tokio::task;
 use ui::bitmap::Bitmap;
-use ui::board::ChessBoard;
 use ui::clipboard::Clipboard;
 use ui::color::Color;
 use ui::drawable::{Drawable, FrameBuffer};
-use ui::game::{Game, GameConfig};
-use ui::rect::{Frame, Rect};
-use ui::sprite::SpriteSheet;
+use ui::game::{Game, GameConfig, GameStatus};
 use ui::start_screen::StartScreen;
 use ui::{Key, ScaleMode, Window, WindowOptions};
 
@@ -20,28 +15,6 @@ const BACKGROUND_COLOUR: Color = Color::black();
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // let ui = Ui::new();
-    // let (game_state_tx, game_state_update_rx) = watch::channel(());
-    // let commands = ui.command_subscription();
-    // ui.set_state_update_watch(game_state);
-    //
-    // task::spawn(async move{
-    //     loop {
-    //         tokio::select! {
-    //             cmd = commands.recv() => {
-    //
-    //             },
-    //             _ = shutdown_signal.wait() => {
-    //                 break;
-    //             }
-    //         }
-    //     }
-    // });
-    //
-    // task::spawn_blocking(move ||{
-    //     ui.run();
-    // }).await?;
-
     let opts = WindowOptions {
         title: true,
         scale_mode: ScaleMode::Center,
@@ -70,7 +43,7 @@ fn ui_loop(mut window: Window) -> anyhow::Result<()> {
     };
     let mut game = Game::new(config);
 
-    let mut active_screen = Rc::new(RefCell::new(Screen::MainScreen));
+    let active_screen = Rc::new(RefCell::new(Screen::MainScreen));
 
     let mut start_screen = StartScreen::new(clipboard);
     start_screen.on_submitted({
@@ -92,6 +65,13 @@ fn ui_loop(mut window: Window) -> anyhow::Result<()> {
             Screen::Game => {
                 game.draw(&mut buf);
                 game.update(&window);
+                match game.state().game_status() {
+                    // TODO
+                    GameStatus::StaleMate | GameStatus::CheckMate(_) | GameStatus::Resign(_) => {
+                        *active_screen.borrow_mut() = Screen::MainScreen;
+                    }
+                    _ => {}
+                }
             }
         }
 
