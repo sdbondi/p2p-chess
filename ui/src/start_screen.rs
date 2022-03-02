@@ -70,8 +70,7 @@ impl StartScreen {
             self.submitted_public_key = Some(self.public_key_input.value().to_string())
         }
     }
-
-    pub fn submitted_public_key_str(&self) -> Option<&str> {
+    pub fn new_game_clicked(&self) -> Option<&str> {
         self.submitted_public_key.as_deref()
     }
 }

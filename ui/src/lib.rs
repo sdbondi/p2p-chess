@@ -4,7 +4,6 @@ pub mod clipboard;
 pub mod color;
 pub mod components;
 pub mod drawable;
-pub mod events;
 pub mod game;
 pub mod letters;
 pub mod palette;
@@ -15,4 +14,6 @@ pub mod start_screen;
 mod ui;
 pub use ui::ChessUi;
 
+// Reexports
 pub use minifb::{Key, ScaleMode, Window, WindowOptions};
+pub use pleco::BitMove;

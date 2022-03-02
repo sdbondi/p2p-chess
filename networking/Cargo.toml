@@ -6,10 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tari_comms = { path = "../../../tari/tari/comms" }
-tari_comms_dht = { path = "../../../tari/tari/comms/dht" }
-tari_storage = { path = "../../../tari/tari/infrastructure/storage" }
-tari_shutdown = { path = "../../../tari/tari/infrastructure/shutdown" }
+tari_comms = { path = "../../tari/comms" }
+tari_comms_dht = { path = "../../tari/comms/dht" }
+tari_storage = { path = "../../tari/infrastructure/storage" }
+tari_shutdown = { path = "../../tari/infrastructure/shutdown" }
+commands = { path = "../commands" }
 
 anyhow = "1.0.41"
 prost = "0.7.0"
@@ -17,3 +18,6 @@ rand = "0.8.4"
 tokio = "1.7.1"
 tower = { version = "0.4", features = ["util"] }
 lmdb-zero = "0.4.4"
+serde = "1.0.126"
+serde_json = "1.0.64"
+log = "0.4.14"

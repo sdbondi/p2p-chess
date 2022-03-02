@@ -515,6 +515,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "commands"
+version = "0.1.0"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "config"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1628,9 +1635,13 @@ name = "networking"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "commands",
  "lmdb-zero",
+ "log",
  "prost 0.7.0",
  "rand 0.8.5",
+ "serde",
+ "serde_json",
  "tari_comms",
  "tari_comms_dht",
  "tari_shutdown",
@@ -1890,6 +1901,9 @@ name = "p2p-chess"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "networking",
+ "serde",
+ "serde_json",
  "tokio",
  "ui",
 ]
@@ -2896,6 +2910,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tari_common_types"
+version = "0.28.1"
+dependencies = [
+ "digest",
+ "lazy_static",
+ "rand 0.8.5",
+ "serde",
+ "tari_crypto",
+ "tari_utilities",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "tari_comms"
 version = "0.28.1"
 dependencies = [
@@ -3317,11 +3345,12 @@ dependencies = [
  "anyhow",
  "bmp",
  "clipboard",
+ "commands",
  "kira",
  "minifb",
  "pleco",
  "rand 0.8.5",
- "tokio",
+ "tari_common_types",
 ]
 
 [[package]]

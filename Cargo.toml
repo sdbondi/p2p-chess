@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "app",
+    "commands",
     "networking",
     "ui",
 ]

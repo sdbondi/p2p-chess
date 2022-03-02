@@ -1,10 +1,15 @@
 use crate::color::Color;
+use crate::command::{ChessCommand, CommandPublisher, CommandSubscription};
 use crate::drawable::FrameBuffer;
-use crate::events::{EventPublisher, EventSubscription};
 use crate::game::GameConfig;
 use crate::screen_manager::ScreenManager;
+use commands::{ChessOperation, CommandPublisher, CommandSubscription};
 use minifb::{Key, Window, WindowOptions};
+use std::sync::mpsc;
 use std::time::Duration;
+use tari_common_types::types::PublicKey;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::error::TryRecvError;
 
 const BACKGROUND_COLOUR: Color = Color::black();
 
@@ -13,7 +18,9 @@ pub struct ChessUi {
     window_width: usize,
     window_height: usize,
     opts: WindowOptions,
-    publisher: EventPublisher,
+    publisher: CommandPublisher,
+    inbound_commands: CommandReceiver,
+    public_key: PublicKey,
 }
 
 impl ChessUi {
@@ -22,21 +29,25 @@ impl ChessUi {
         window_width: usize,
         window_height: usize,
         opts: WindowOptions,
+        inbound_commands: CommandReceiver,
+        public_key: PublicKey,
     ) -> Self {
         Self {
             title,
             window_width,
             window_height,
             opts,
-            publisher: EventPublisher::new(),
+            publisher: CommandPublisher::new(),
+            inbound_commands: inbound_commands,
+            public_key,
         }
     }
 
-    pub fn subscribe(&self) -> EventSubscription {
+    pub fn subscribe(&self) -> CommandSubscription {
         self.publisher.subscribe()
     }
 
-    pub fn run(self) -> anyhow::Result<()> {
+    pub fn run(mut self) -> anyhow::Result<()> {
         let mut window = Window::new(self.title, self.window_width, self.window_height, self.opts)?;
 
         // ~60fps
@@ -47,7 +58,7 @@ impl ChessUi {
         Ok(())
     }
 
-    fn ui_loop(&self, mut window: Window) -> anyhow::Result<()> {
+    fn ui_loop(&mut self, mut window: Window) -> anyhow::Result<()> {
         let mut buf = FrameBuffer::new(
             self.window_width as u32,
             self.window_height as u32,
@@ -65,6 +76,15 @@ impl ChessUi {
         let mut should_exit = false;
         while window.is_open() && !should_exit {
             screen_manager.render(&window, &mut buf);
+            match self.inbound_commands.try_recv() {
+                Ok(evt) => {
+                    screen_manager.apply_event(external_event);
+                }
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => {
+                    should_exit = true;
+                }
+            };
 
             if let Some(keys) = window.get_keys() {
                 if (keys.contains(&Key::LeftCtrl) || keys.contains(&Key::RightCtrl))

@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tari_common_types = { path = "../../tari/base_layer/common_types" }
+commands = { path = "../commands" }
+
 anyhow = "1.0.41"
 bmp = "0.5.0"
 clipboard = "0.5.0"
@@ -13,4 +16,3 @@ kira = "0.5.3"
 minifb = "0.19.3"
 pleco = "0.5.0"
 rand = "0.8.4"
-tokio = { version = "1.7.1", default-features = false, features = ["sync"] }

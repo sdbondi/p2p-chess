@@ -7,6 +7,9 @@ edition = "2021"
 
 [dependencies]
 ui = { path = "../ui" }
+networking = { path = "../networking" }
 
 anyhow = "1.0.41"
 tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
+serde = "1.0.126"
+serde_json = "1.0.64"

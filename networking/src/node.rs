@@ -46,11 +46,11 @@ use tower::ServiceBuilder;
 pub const TOR_CONTROL_PORT_ADDR: &str = "/ip4/127.0.0.1/tcp/9051";
 
 pub async fn create<P: AsRef<Path>>(
-    node_identity: Option<Arc<NodeIdentity>>,
+    node_identity: Arc<NodeIdentity>,
     database_path: P,
     tor_identity: Option<TorIdentity>,
     onion_port: u16,
-    seed_peers: &[Peer],
+    seed_peers: Vec<Peer>,
     shutdown_signal: ShutdownSignal,
 ) -> anyhow::Result<(CommsNode, Dht, mpsc::Receiver<DecryptedDhtMessage>)> {
     let datastore = LMDBBuilder::new()
@@ -62,14 +62,6 @@ pub async fn create<P: AsRef<Path>>(
         .unwrap();
     let peer_database = datastore.get_handle("peerdb").unwrap();
     let peer_database = LMDBWrapper::new(Arc::new(peer_database));
-
-    let node_identity = node_identity.unwrap_or_else(|| {
-        Arc::new(NodeIdentity::random(
-            &mut OsRng,
-            Multiaddr::empty(),
-            Default::default(),
-        ))
-    });
 
     let builder = CommsBuilder::new()
         .allow_test_addresses()
@@ -125,7 +117,7 @@ pub async fn create<P: AsRef<Path>>(
 
     let peer_manager = comms_node.peer_manager();
     for peer in seed_peers {
-        peer_manager.add_peer(peer.clone()).await?;
+        peer_manager.add_peer(peer).await?;
     }
 
     let dht_outbound_layer = dht.outbound_middleware_layer();
