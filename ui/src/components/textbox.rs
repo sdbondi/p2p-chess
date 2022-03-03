@@ -1,9 +1,12 @@
-use crate::clipboard::Clipboard;
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
-use crate::letters::Letters;
-use crate::rect::{Frame, Rect};
 use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window};
+
+use crate::{
+    clipboard::Clipboard,
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+    letters::Letters,
+    rect::{Frame, Rect},
+};
 
 #[derive(Debug)]
 pub struct TextBox {
@@ -30,6 +33,7 @@ impl TextBox {
             clipboard,
         }
     }
+
     pub fn value(&self) -> &str {
         &self.value
     }
@@ -55,9 +59,9 @@ impl TextBox {
 
     pub fn update(&mut self, window: &Window) {
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-            let active = self.is_active
-                || (self.is_in_boundary(x.round() as u32, y.round() as u32)
-                    && window.get_mouse_down(MouseButton::Left));
+            let active = self.is_active ||
+                (self.is_in_boundary(x.round() as u32, y.round() as u32) &&
+                    window.get_mouse_down(MouseButton::Left));
 
             self.set_active(active);
         }
@@ -83,8 +87,8 @@ impl TextBox {
                     Key::Backspace => {
                         self.value.pop();
                         continue;
-                    }
-                    _ => {}
+                    },
+                    _ => {},
                 }
             }
             for key in keys {

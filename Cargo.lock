@@ -515,13 +515,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "commands"
-version = "0.1.0"
-dependencies = [
- "tokio",
-]
-
-[[package]]
 name = "config"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1161,15 +1154,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
@@ -1635,10 +1619,10 @@ name = "networking"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "commands",
  "lmdb-zero",
  "log",
- "prost 0.7.0",
+ "p2p_chess_channel",
+ "prost",
  "rand 0.8.5",
  "serde",
  "serde_json",
@@ -1902,10 +1886,21 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "networking",
+ "p2p_chess_channel",
+ "rand 0.8.5",
  "serde",
  "serde_json",
+ "tari_shutdown",
  "tokio",
  "ui",
+]
+
+[[package]]
+name = "p2p_chess_channel"
+version = "0.1.0"
+dependencies = [
+ "tari_comms",
+ "tokio",
 ]
 
 [[package]]
@@ -2131,22 +2126,12 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e6984d2f1a23009bd270b8bb56d0926810a3d483f59c987d77969e9d8e840b2"
-dependencies = [
- "bytes 1.1.0",
- "prost-derive 0.7.0",
-]
-
-[[package]]
-name = "prost"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "444879275cb4fd84958b1a1d5420d15e6fcf7c235fe47f053c9c2a80aceb6001"
 dependencies = [
  "bytes 1.1.0",
- "prost-derive 0.9.0",
+ "prost-derive",
 ]
 
 [[package]]
@@ -2157,29 +2142,16 @@ checksum = "62941722fb675d463659e49c4f3fe1fe792ff24fe5bbaa9c08cd3b98a1c354f5"
 dependencies = [
  "bytes 1.1.0",
  "heck",
- "itertools 0.10.3",
+ "itertools",
  "lazy_static",
  "log",
  "multimap",
  "petgraph",
- "prost 0.9.0",
+ "prost",
  "prost-types",
  "regex",
  "tempfile",
  "which 4.2.4",
-]
-
-[[package]]
-name = "prost-derive"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "169a15f3008ecb5160cba7d37bcd690a7601b6d30cfb87a117d45e59d52af5d4"
-dependencies = [
- "anyhow",
- "itertools 0.9.0",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -2189,7 +2161,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9cc1a3263e07e0bf68e96268f37665207b49560d98739662cdfaae215c720fe"
 dependencies = [
  "anyhow",
- "itertools 0.10.3",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn",
@@ -2202,7 +2174,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "534b7a0e836e3c482d2693070f982e39e7611da9695d4d1f5a4b186b51faef0a"
 dependencies = [
  "bytes 1.1.0",
- "prost 0.9.0",
+ "prost",
 ]
 
 [[package]]
@@ -2910,20 +2882,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tari_common_types"
-version = "0.28.1"
-dependencies = [
- "digest",
- "lazy_static",
- "rand 0.8.5",
- "serde",
- "tari_crypto",
- "tari_utilities",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "tari_comms"
 version = "0.28.1"
 dependencies = [
@@ -2946,7 +2904,7 @@ dependencies = [
  "nom 5.1.2",
  "once_cell",
  "pin-project 1.0.10",
- "prost 0.9.0",
+ "prost",
  "prost-types",
  "rand 0.8.5",
  "serde",
@@ -2982,7 +2940,7 @@ dependencies = [
  "log",
  "log-mdc",
  "pin-project 0.4.29",
- "prost 0.9.0",
+ "prost",
  "prost-types",
  "rand 0.8.5",
  "serde",
@@ -3345,12 +3303,13 @@ dependencies = [
  "anyhow",
  "bmp",
  "clipboard",
- "commands",
  "kira",
  "minifb",
+ "p2p_chess_channel",
  "pleco",
  "rand 0.8.5",
- "tari_common_types",
+ "tari_comms",
+ "tari_utilities",
 ]
 
 [[package]]

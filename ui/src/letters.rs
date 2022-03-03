@@ -1,10 +1,12 @@
-use crate::bitmap::Bitmap;
-use crate::color::Color;
-use crate::drawable::Drawable;
-use crate::drawable::FrameBuffer;
-use crate::rect::Frame;
-use crate::sprite::SpriteSheet;
 use std::rc::Rc;
+
+use crate::{
+    bitmap::Bitmap,
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+    rect::Frame,
+    sprite::SpriteSheet,
+};
 
 #[derive(Debug, Clone)]
 pub struct Letters {
@@ -26,16 +28,14 @@ impl Letters {
                 continue;
             }
             match self.sprite_sheet.get_sprite_drawable(&ch, x, y) {
-                Some(mut drawable) => drawable
-                    .with_substitute_color(Color::black(), color)
-                    .draw(buf),
+                Some(mut drawable) => drawable.with_substitute_color(Color::black(), color).draw(buf),
                 None => {
                     self.sprite_sheet
                         .get_sprite_drawable(&'?', x, y)
                         .unwrap()
                         .with_substitute_color(Color::black(), color)
                         .draw(buf);
-                }
+                },
             }
             x += LEADING;
         }
@@ -43,8 +43,7 @@ impl Letters {
 }
 
 fn init_letters_sprite() -> SpriteSheet<char, Bitmap> {
-    let image =
-        Bitmap::from_reader(&mut include_bytes!("../assets/letters.bmp").as_slice()).unwrap();
+    let image = Bitmap::from_reader(&mut include_bytes!("../assets/letters.bmp").as_slice()).unwrap();
     let mut sprite_sheet = SpriteSheet::new(image);
     let letters = Frame {
         x: 0,

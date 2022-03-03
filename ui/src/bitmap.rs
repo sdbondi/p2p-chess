@@ -1,7 +1,8 @@
-use crate::color::Color;
-use crate::sprite::GetRgba;
-use bmp::Pixel;
 use std::io::Read;
+
+use bmp::Pixel;
+
+use crate::{color::Color, sprite::GetRgba};
 
 #[derive(Debug)]
 pub struct Bitmap {

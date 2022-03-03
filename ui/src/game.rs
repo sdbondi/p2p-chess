@@ -1,11 +1,14 @@
-use crate::bitmap::Bitmap;
-use crate::board::ChessBoard;
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
-use crate::rect::Frame;
-use crate::sprite::SpriteSheet;
 use minifb::{MouseButton, MouseMode, Window};
-use pleco::Player;
+use pleco::{BitMove, Player};
+
+use crate::{
+    bitmap::Bitmap,
+    board::ChessBoard,
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+    rect::Frame,
+    sprite::SpriteSheet,
+};
 
 #[derive(Debug)]
 pub struct GameScreen {
@@ -54,6 +57,10 @@ impl GameScreen {
     pub fn state(&self) -> &GameState {
         &self.state
     }
+
+    pub fn apply_move(&mut self, mv: BitMove) {
+        self.board.apply_move(mv);
+    }
 }
 
 impl Drawable for GameScreen {
@@ -71,29 +78,25 @@ impl Drawable for GameScreen {
                         );
                         // TODO: good UX
                         // board.highlight_square_at(mouse_x, mouse_y, buf);
-                    }
+                    },
                     None => {
                         if self.board.take_piece_at(mouse_x, mouse_y).is_some() {
                             self.floating_piece = Some((mouse_x % 90, mouse_y % 90));
                         }
-                    }
+                    },
                 }
             }
         } else {
             if self.floating_piece.is_some() {
-                match self
-                    .state
-                    .mouse_pos
-                    .and_then(|(x, y)| self.board.get_square(x, y))
-                {
+                match self.state.mouse_pos.and_then(|(x, y)| self.board.get_square(x, y)) {
                     Some(sq) => {
                         if !self.board.make_move_to(sq) {
                             self.board.return_taken_piece();
                         }
-                    }
+                    },
                     None => {
                         self.board.return_taken_piece();
-                    }
+                    },
                 }
                 self.floating_piece = None;
             }
@@ -149,8 +152,7 @@ impl Default for GameState {
 }
 
 fn init_pieces_sprite() -> SpriteSheet<&'static str, Bitmap> {
-    let image =
-        Bitmap::from_reader(&mut include_bytes!("../assets/pieces.bmp").as_slice()).unwrap();
+    let image = Bitmap::from_reader(&mut include_bytes!("../assets/pieces.bmp").as_slice()).unwrap();
     let mut sprite_sheet = SpriteSheet::new(image);
     let pieces = Frame {
         x: 0,

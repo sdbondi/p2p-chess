@@ -1,7 +1,9 @@
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
-use crate::letters::Letters;
-use crate::rect::Frame;
+use crate::{
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+    letters::Letters,
+    rect::Frame,
+};
 
 #[derive(Debug)]
 pub struct Label {
@@ -25,6 +27,7 @@ impl Label {
         self.text = text.into();
         self
     }
+
     pub fn set_text_color(&mut self, color: Color) -> &mut Self {
         self.text_color = color;
         self
@@ -32,13 +35,8 @@ impl Label {
 
     fn draw_text(&self, buf: &mut FrameBuffer) {
         let mid = (self.dims.h / 2) - 10;
-        self.letters.draw_string(
-            &self.text,
-            self.dims.x + 2,
-            self.dims.y + mid,
-            self.text_color,
-            buf,
-        );
+        self.letters
+            .draw_string(&self.text, self.dims.x + 2, self.dims.y + mid, self.text_color, buf);
     }
 }
 

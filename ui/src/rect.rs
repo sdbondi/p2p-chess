@@ -1,5 +1,7 @@
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
+use crate::{
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+};
 
 #[derive(Debug)]
 pub struct Rect {
@@ -37,12 +39,15 @@ impl Rect {
     pub fn x(&self) -> u32 {
         self.frame.x
     }
+
     pub fn y(&self) -> u32 {
         self.frame.y
     }
+
     pub fn w(&self) -> u32 {
         self.frame.w
     }
+
     pub fn h(&self) -> u32 {
         self.frame.h
     }
@@ -52,8 +57,7 @@ impl Drawable for Rect {
     fn draw(&mut self, buf: &mut FrameBuffer) {
         self.frame.fill(self.bg_color.to_rgba(), buf);
         if self.border_size > 0 {
-            self.frame
-                .draw_border(self.border_size, self.border_color, buf);
+            self.frame.draw_border(self.border_size, self.border_color, buf);
         }
     }
 }
@@ -108,9 +112,7 @@ impl Frame {
     }
 
     pub fn scan<F>(&self, mut callback: F)
-    where
-        F: FnMut(u32, u32) -> bool,
-    {
+    where F: FnMut(u32, u32) -> bool {
         for y in self.y..=self.y + self.h {
             for x in self.x..=self.x + self.w {
                 if !callback(x, y) {

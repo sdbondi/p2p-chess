@@ -1,7 +1,6 @@
+use std::{cmp, collections::Bound, ops::RangeBounds};
+
 use crate::color::Color;
-use std::cmp;
-use std::collections::Bound;
-use std::ops::RangeBounds;
 
 pub trait Drawable {
     fn draw(&mut self, buf: &mut FrameBuffer);

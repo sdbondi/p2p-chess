@@ -1,8 +1,10 @@
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
-use crate::rect::Frame;
-use std::collections::HashMap;
-use std::hash::Hash;
+use std::{collections::HashMap, hash::Hash};
+
+use crate::{
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+    rect::Frame,
+};
 
 #[derive(Debug)]
 pub struct SpriteSheet<K, I> {

@@ -1,15 +1,10 @@
-use crate::color::Color;
-use crate::command::{ChessCommand, CommandPublisher, CommandSubscription};
-use crate::drawable::FrameBuffer;
-use crate::game::GameConfig;
-use crate::screen_manager::ScreenManager;
-use commands::{ChessOperation, CommandPublisher, CommandSubscription};
-use minifb::{Key, Window, WindowOptions};
-use std::sync::mpsc;
 use std::time::Duration;
-use tari_common_types::types::PublicKey;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::error::TryRecvError;
+
+use minifb::{Key, Window, WindowOptions};
+use p2p_chess_channel::{ChessOperation, MessageChannel, TryRecvError};
+use tari_comms::types::CommsPublicKey;
+
+use crate::{color::Color, drawable::FrameBuffer, game::GameConfig, screen_manager::ScreenManager};
 
 const BACKGROUND_COLOUR: Color = Color::black();
 
@@ -18,9 +13,8 @@ pub struct ChessUi {
     window_width: usize,
     window_height: usize,
     opts: WindowOptions,
-    publisher: CommandPublisher,
-    inbound_commands: CommandReceiver,
-    public_key: PublicKey,
+    channel: MessageChannel<ChessOperation>,
+    public_key: CommsPublicKey,
 }
 
 impl ChessUi {
@@ -29,22 +23,17 @@ impl ChessUi {
         window_width: usize,
         window_height: usize,
         opts: WindowOptions,
-        inbound_commands: CommandReceiver,
-        public_key: PublicKey,
+        channel: MessageChannel<ChessOperation>,
+        public_key: CommsPublicKey,
     ) -> Self {
         Self {
             title,
             window_width,
             window_height,
             opts,
-            publisher: CommandPublisher::new(),
-            inbound_commands: inbound_commands,
+            channel,
             public_key,
         }
-    }
-
-    pub fn subscribe(&self) -> CommandSubscription {
-        self.publisher.subscribe()
     }
 
     pub fn run(mut self) -> anyhow::Result<()> {
@@ -58,12 +47,8 @@ impl ChessUi {
         Ok(())
     }
 
-    fn ui_loop(&mut self, mut window: Window) -> anyhow::Result<()> {
-        let mut buf = FrameBuffer::new(
-            self.window_width as u32,
-            self.window_height as u32,
-            BACKGROUND_COLOUR,
-        );
+    fn ui_loop(mut self, mut window: Window) -> anyhow::Result<()> {
+        let mut buf = FrameBuffer::new(self.window_width as u32, self.window_height as u32, BACKGROUND_COLOUR);
 
         let config = GameConfig {
             window_width: self.window_width as u32,
@@ -72,25 +57,14 @@ impl ChessUi {
             dark_color: Color::dark_green(),
         };
 
-        let mut screen_manager = ScreenManager::initialize(self.publisher.clone(), config)?;
-        let mut should_exit = false;
-        while window.is_open() && !should_exit {
+        let mut screen_manager = ScreenManager::initialize(config, self.channel, self.public_key)?;
+
+        while window.is_open() {
             screen_manager.render(&window, &mut buf);
-            match self.inbound_commands.try_recv() {
-                Ok(evt) => {
-                    screen_manager.apply_event(external_event);
-                }
-                Err(TryRecvError::Empty) => {}
-                Err(TryRecvError::Disconnected) => {
-                    should_exit = true;
-                }
-            };
 
             if let Some(keys) = window.get_keys() {
-                if (keys.contains(&Key::LeftCtrl) || keys.contains(&Key::RightCtrl))
-                    && keys.contains(&Key::Q)
-                {
-                    should_exit = true;
+                if (keys.contains(&Key::LeftCtrl) || keys.contains(&Key::RightCtrl)) && keys.contains(&Key::Q) {
+                    break;
                 }
             }
 

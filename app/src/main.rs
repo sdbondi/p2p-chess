@@ -1,12 +1,16 @@
-use networking::{Networking, NodeIdentity};
-use std::fs;
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{
+    fs,
+    fs::File,
+    io::{Read, Write},
+    path::{Path, PathBuf},
+    str::FromStr,
+    sync::Arc,
+};
+
+use networking::{Multiaddr, Networking, NodeIdentity, PeerFeatures};
+use rand::rngs::OsRng;
+use tari_shutdown::Shutdown;
 use tokio::runtime::Runtime;
-use ui::command::CommandSubscription;
 use ui::{ChessUi, ScaleMode, WindowOptions};
 
 const WINDOW_WIDTH: usize = 1024;
@@ -17,7 +21,10 @@ fn main() -> anyhow::Result<()> {
     let node_identity = load_json(base_path.join("node_identity.json"))?
         .map(Arc::new)
         .unwrap_or_else(create_node_identity);
+    let shutdown = Shutdown::new();
+    let signal = shutdown.to_signal();
 
+    let (channel1, channel2) = p2p_chess_channel::channel(10);
     let mut ui = ChessUi::new(
         "P2P Chess",
         WINDOW_WIDTH,
@@ -28,16 +35,12 @@ fn main() -> anyhow::Result<()> {
             resize: true,
             ..Default::default()
         },
+        channel1,
+        node_identity.public_key().clone(),
     );
 
-    let mut out_cmds = ui.subscribe();
-    // let state = ui.shared_state();
-
     let runtime = Runtime::new()?;
-    let networking = {
-        let _e = runtime.enter();
-        Networking::spawn(node_identity, &base_path, out_cmds)?
-    };
+    runtime.block_on(Networking::start(node_identity, &base_path, channel2, signal))?;
 
     ui.run()?;
 

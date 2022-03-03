@@ -100,6 +100,15 @@ impl Color {
             a: 0xff,
         }
     }
+
+    pub const fn red() -> Self {
+        Self {
+            r: 241,
+            g: 96,
+            b: 62,
+            a: 0xff,
+        }
+    }
 }
 
 #[cfg(test)]

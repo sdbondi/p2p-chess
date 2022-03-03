@@ -1,8 +1,9 @@
-use crate::message::{MessageType, ProtoMessage};
 use std::sync::Arc;
-use tari_comms::types::CommsPublicKey;
-use tari_comms::NodeIdentity;
+
+use tari_comms::{types::CommsPublicKey, NodeIdentity};
 use tokio::sync::mpsc;
+
+use crate::message::{MessageType, ProtoMessage};
 
 pub struct NetworkingHandle {
     // TODO: remove "I'm lazy" pubs
@@ -24,7 +25,7 @@ impl NetworkingHandle {
         Ok(())
     }
 
-    pub async fn next_msg(&self) -> Option<ProtoMessage> {
+    pub async fn next_msg(&mut self) -> Option<ProtoMessage> {
         self.inbound_messages.recv().await
     }
 

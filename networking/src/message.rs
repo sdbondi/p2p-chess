@@ -1,20 +1,19 @@
-use prost::Message as ProstMessage;
-use std::ops::Deref;
+use anyhow::anyhow;
 
 #[derive(Clone, prost::Message)]
 pub struct ProtoMessage {
     #[prost(uint32, tag = "1")]
-    seq: u32,
+    pub seq: u32,
     #[prost(enumeration = "MessageType", tag = "2")]
-    message_type: i32,
+    pub message_type: i32,
     #[prost(bytes, tag = "3")]
-    payload: Vec<u8>,
+    pub payload: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Copy, prost::Enumeration)]
 pub enum MessageType {
     NewGame = 0,
-    Move = 1,
+    PlayMove = 1,
     Resign = 2,
 }
 
@@ -30,11 +29,24 @@ impl ProtoMessage {
     }
 }
 
+impl TryFrom<i32> for MessageType {
+    type Error = anyhow::Error;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(MessageType::NewGame),
+            1 => Ok(MessageType::PlayMove),
+            2 => Ok(MessageType::Resign),
+            _ => Err(anyhow!("Invalid message type {}", value)),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Message<T> {
-    seq: u32,
-    message_type: MessageType,
-    payload: T,
+    pub seq: u32,
+    pub message_type: MessageType,
+    pub payload: T,
 }
 
 impl<T: prost::Message> Message<T> {
@@ -52,3 +64,31 @@ impl<T: prost::Message> Message<T> {
         ProtoMessage::new(self.seq, self.message_type, bytes)
     }
 }
+
+impl<T: prost::Message + Default> TryFrom<ProtoMessage> for Message<T> {
+    type Error = anyhow::Error;
+
+    fn try_from(value: ProtoMessage) -> Result<Self, Self::Error> {
+        let payload = T::decode(value.payload.as_slice())?;
+        Ok(Message {
+            seq: value.seq,
+            message_type: MessageType::try_from(value.message_type)?,
+            payload,
+        })
+    }
+}
+
+#[derive(Clone, prost::Message)]
+pub struct NewGameMsg {
+    #[prost(uint32, tag = "1")]
+    pub player: u32,
+}
+
+#[derive(Clone, prost::Message)]
+pub struct MoveMsg {
+    #[prost(uint32, tag = "1")]
+    pub value: u32,
+}
+
+#[derive(Clone, prost::Message)]
+pub struct ResignMsg;

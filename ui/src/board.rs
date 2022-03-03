@@ -1,11 +1,14 @@
-use crate::bitmap::Bitmap;
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
-use crate::rect::{Frame, Rect};
-use crate::sprite::SpriteSheet;
-use pleco::core::CastleType;
-use pleco::{BitMove, Board, File, Piece, Player, Rank, SQ};
 use std::mem::transmute;
+
+use pleco::{core::CastleType, BitMove, Board, File, Piece, Player, Rank, SQ};
+
+use crate::{
+    bitmap::Bitmap,
+    color::Color,
+    drawable::{Drawable, FrameBuffer},
+    rect::{Frame, Rect},
+    sprite::SpriteSheet,
+};
 
 #[derive(Debug)]
 pub struct ChessBoard {
@@ -30,8 +33,7 @@ impl ChessBoard {
             frame,
             light_colour,
             dark_colour,
-            board: Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-                .unwrap(),
+            board: Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap(),
             sprite_sheet,
             player,
             taken_piece: None,
@@ -43,9 +45,14 @@ impl ChessBoard {
         match self.board.piece_at_sq(sq) {
             Piece::None => None,
             p => {
-                self.taken_piece = Some((sq, p));
-                Some(p)
-            }
+                // Only can take your piece
+                if p.player().filter(|p| *p == self.player).is_some() {
+                    self.taken_piece = Some((sq, p));
+                    Some(p)
+                } else {
+                    None
+                }
+            },
         }
     }
 
@@ -56,10 +63,7 @@ impl ChessBoard {
     pub fn make_move_to(&mut self, dest: SQ) -> bool {
         if let Some((src, _)) = self.taken_piece {
             let all_moves = self.board.generate_moves();
-            if let Some(mv) = all_moves
-                .iter()
-                .find(|m| m.get_src() == src && m.get_dest() == dest)
-            {
+            if let Some(mv) = all_moves.iter().find(|m| m.get_src() == src && m.get_dest() == dest) {
                 dbg!(src.to_string(), dest.to_string(), mv.to_string());
                 self.board.apply_move(*mv);
                 return true;
@@ -83,22 +87,14 @@ impl ChessBoard {
                 if src == SQ::E1 {
                     if dest == SQ::C1 && self.board.can_castle(self.player, CastleType::QueenSide) {
                         let rook = self.board.castling_rook_square(CastleType::QueenSide);
-                        return Some(BitMove::make(
-                            BitMove::FLAG_QUEEN_CASTLE | CAPTURE,
-                            src,
-                            rook,
-                        ));
+                        return Some(BitMove::make(BitMove::FLAG_QUEEN_CASTLE | CAPTURE, src, rook));
                     }
                     if dest == SQ::G1 && self.board.can_castle(self.player, CastleType::KingSide) {
                         let rook = self.board.castling_rook_square(CastleType::KingSide);
-                        return Some(BitMove::make(
-                            BitMove::FLAG_KING_CASTLE | CAPTURE,
-                            src,
-                            rook,
-                        ));
+                        return Some(BitMove::make(BitMove::FLAG_KING_CASTLE | CAPTURE, src, rook));
                     }
                 }
-            }
+            },
             Player::Black => {
                 if src == SQ::E8 {
                     if dest == SQ::C8 && self.board.can_castle(self.player, CastleType::QueenSide) {
@@ -108,14 +104,10 @@ impl ChessBoard {
                     }
                     if dest == SQ::G8 && self.board.can_castle(self.player, CastleType::KingSide) {
                         let rook = self.board.castling_rook_square(CastleType::KingSide);
-                        return Some(BitMove::make(
-                            BitMove::FLAG_KING_CASTLE | CAPTURE,
-                            src,
-                            rook,
-                        ));
+                        return Some(BitMove::make(BitMove::FLAG_KING_CASTLE | CAPTURE, src, rook));
                     }
                 }
-            }
+            },
         }
         None
     }
@@ -157,11 +149,7 @@ impl ChessBoard {
         let locations = self.board.get_piece_locations();
 
         for (sq, piece) in locations {
-            if self
-                .taken_piece
-                .map(|(taken_sq, _)| taken_sq == sq)
-                .unwrap_or(false)
-            {
+            if self.taken_piece.map(|(taken_sq, _)| taken_sq == sq).unwrap_or(false) {
                 continue;
             }
             let (x, y) = self.sq_to_coords(sq);
@@ -171,10 +159,7 @@ impl ChessBoard {
 
     fn draw_piece(&self, piece: Piece, x: u32, y: u32, _: u8, buf: &mut FrameBuffer) {
         let name = piece_to_sprite_name(piece);
-        self.sprite_sheet
-            .get_sprite_drawable(&name, x, y)
-            .unwrap()
-            .draw(buf);
+        self.sprite_sheet.get_sprite_drawable(&name, x, y).unwrap().draw(buf);
     }
 
     pub fn draw_taken_piece(&self, x: u32, y: u32, buf: &mut FrameBuffer) {
@@ -233,6 +218,10 @@ impl ChessBoard {
         };
         let sq = unsafe { transmute::<u8, SQ>(file + (rank << 3)) };
         Some(sq)
+    }
+
+    pub fn apply_move(&mut self, mv: BitMove) {
+        self.board.apply_move(mv)
     }
 }
 

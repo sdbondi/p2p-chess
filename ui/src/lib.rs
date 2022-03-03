@@ -12,8 +12,7 @@ pub mod screen_manager;
 pub mod sprite;
 pub mod start_screen;
 mod ui;
-pub use ui::ChessUi;
-
 // Reexports
 pub use minifb::{Key, ScaleMode, Window, WindowOptions};
 pub use pleco::BitMove;
+pub use ui::ChessUi;

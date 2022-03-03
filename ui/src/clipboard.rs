@@ -1,7 +1,10 @@
+use std::{
+    cell::RefCell,
+    fmt::{Debug, Formatter},
+    rc::Rc,
+};
+
 use clipboard::{ClipboardContext, ClipboardProvider};
-use std::cell::RefCell;
-use std::fmt::{Debug, Formatter};
-use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Clipboard {
@@ -17,6 +20,13 @@ impl Clipboard {
         })
     }
 
+    pub fn set_contents(&self, text: String) -> anyhow::Result<()> {
+        self.clipboard
+            .borrow_mut()
+            .set_contents(text)
+            .map_err(|err| anyhow::anyhow!("{}", err))
+    }
+
     pub fn get_contents(&self) -> anyhow::Result<String> {
         self.clipboard
             .borrow_mut()
@@ -27,8 +37,6 @@ impl Clipboard {
 
 impl Debug for Clipboard {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Clipboard")
-            .field("clipboard", &"...")
-            .finish()
+        f.debug_struct("Clipboard").field("clipboard", &"...").finish()
     }
 }

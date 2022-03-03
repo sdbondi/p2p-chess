@@ -20,19 +20,19 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 //  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::{path::Path, sync::Arc, time::Duration};
+use std::{fs, path::Path, sync::Arc, time::Duration};
 
-use rand::rngs::OsRng;
-use tari_comms::peer_manager::Peer;
 use tari_comms::{
     backoff::ConstantBackoff,
-    multiaddr::Multiaddr,
+    peer_manager::Peer,
     pipeline,
     pipeline::SinkService,
     protocol::{messaging::MessagingProtocolExtension, NodeNetworkInfo},
     tor,
     tor::{HsFlags, TorIdentity},
-    CommsBuilder, CommsNode, NodeIdentity,
+    CommsBuilder,
+    CommsNode,
+    NodeIdentity,
 };
 use tari_comms_dht::{inbound::DecryptedDhtMessage, DbConnectionUrl, Dht};
 use tari_shutdown::ShutdownSignal;
@@ -53,6 +53,7 @@ pub async fn create<P: AsRef<Path>>(
     seed_peers: Vec<Peer>,
     shutdown_signal: ShutdownSignal,
 ) -> anyhow::Result<(CommsNode, Dht, mpsc::Receiver<DecryptedDhtMessage>)> {
+    fs::create_dir_all(database_path.as_ref())?;
     let datastore = LMDBBuilder::new()
         .set_path(database_path.as_ref())
         .set_env_config(LMDBConfig::default())
@@ -96,14 +97,10 @@ pub async fn create<P: AsRef<Path>>(
     let mut hs_ctl = hs_builder.build().await?;
     let transport = hs_ctl.initialize_transport().await?;
 
-    let comms_node = builder
-        .with_listener_address(hs_ctl.proxied_address())
-        .build()?;
+    let comms_node = builder.with_listener_address(hs_ctl.proxied_address()).build()?;
 
     let dht = tari_comms_dht::Dht::builder()
-        .with_database_url(DbConnectionUrl::File(
-            database_path.as_ref().join("dht.sqlite"),
-        ))
+        .with_database_url(DbConnectionUrl::File(database_path.as_ref().join("dht.sqlite")))
         .set_auto_store_and_forward_requests(false)
         .with_outbound_sender(outbound_tx)
         .enable_auto_join()
@@ -134,9 +131,7 @@ pub async fn create<P: AsRef<Path>>(
                 .max_concurrent_inbound_tasks(1)
                 .max_concurrent_outbound_tasks(1)
                 .with_outbound_pipeline(outbound_rx, |sink| {
-                    ServiceBuilder::new()
-                        .layer(dht_outbound_layer)
-                        .service(sink)
+                    ServiceBuilder::new().layer(dht_outbound_layer).service(sink)
                 })
                 .build(),
         ))

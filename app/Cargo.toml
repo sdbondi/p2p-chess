@@ -6,10 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tari_shutdown = { path = "../../tari/infrastructure/shutdown" }
 ui = { path = "../ui" }
 networking = { path = "../networking" }
+p2p_chess_channel = { path = "../channel" }
 
 anyhow = "1.0.41"
 tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
 serde = "1.0.126"
 serde_json = "1.0.64"
+rand = "0.8.4"

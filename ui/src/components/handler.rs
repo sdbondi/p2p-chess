@@ -3,8 +3,7 @@ pub trait ClickHandler {
 }
 
 impl<F> ClickHandler for F
-where
-    F: FnMut(),
+where F: FnMut()
 {
     fn handle_click(&mut self) {
         (self)()

@@ -1,16 +1,22 @@
-use crate::color::Color;
-use crate::drawable::{Drawable, FrameBuffer};
-use crate::letters::Letters;
-use crate::rect::Rect;
+use std::fmt::{Debug, Formatter};
+
 use minifb::{MouseButton, MouseMode, Window};
 
-#[derive(Debug)]
+use crate::{
+    color::Color,
+    components::handler::ClickHandler,
+    drawable::{Drawable, FrameBuffer},
+    letters::Letters,
+    rect::Rect,
+};
+
 pub struct Button {
     rect: Rect,
     text: String,
     letters: Letters,
     is_disabled: bool,
     click: Option<()>,
+    on_click: Option<Box<dyn ClickHandler>>,
 }
 
 impl Button {
@@ -21,6 +27,7 @@ impl Button {
             is_disabled: false,
             letters,
             click: None,
+            on_click: None,
         }
     }
 
@@ -31,6 +38,11 @@ impl Button {
 
     pub fn set_disabled(&mut self, disabled: bool) -> &mut Self {
         self.is_disabled = disabled;
+        self
+    }
+
+    pub fn on_click<F: ClickHandler + 'static>(&mut self, handler: F) -> &mut Self {
+        self.on_click = Some(Box::new(handler));
         self
     }
 
@@ -47,6 +59,9 @@ impl Button {
             if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
                 if self.rect.is_in_boundary(x.round() as u32, y.round() as u32) {
                     self.click = Some(());
+                    if let Some(ref mut handler) = self.on_click {
+                        handler.handle_click();
+                    }
                 }
             }
         }
@@ -56,8 +71,7 @@ impl Button {
         let half_text_w = self.text.len() as u32 * 11 / 2;
         let x = self.rect.x() + (self.rect.w() / 2) - half_text_w;
         let y = self.rect.y() + (self.rect.h() / 2) - 8;
-        self.letters
-            .draw_string(&self.text, x, y, Color::light_grey(), buf);
+        self.letters.draw_string(&self.text, x, y, Color::black(), buf);
     }
 }
 
@@ -65,5 +79,17 @@ impl Drawable for Button {
     fn draw(&mut self, buf: &mut FrameBuffer) {
         self.rect.draw(buf);
         self.draw_text(buf);
+    }
+}
+
+impl Debug for Button {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Button")
+            .field("rect", &format!("{:?}", self.rect))
+            .field("text", &format!("{:?}", self.text))
+            .field("letters", &format!("{:?}", self.letters))
+            .field("is_disabled", &format!("{:?}", self.is_disabled))
+            .field("on_click", &"...")
+            .finish()
     }
 }
