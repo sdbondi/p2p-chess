@@ -5,6 +5,7 @@ pub mod color;
 pub mod components;
 pub mod drawable;
 pub mod game;
+pub mod game_screen;
 pub mod letters;
 pub mod palette;
 pub mod rect;

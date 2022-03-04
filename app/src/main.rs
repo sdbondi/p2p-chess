@@ -17,10 +17,14 @@ const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 90 * 8;
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
     let base_path = PathBuf::from_str("/tmp/p2pchess")?;
     let node_identity = load_json(base_path.join("node_identity.json"))?
         .map(Arc::new)
         .unwrap_or_else(create_node_identity);
+    if !node_identity.is_signed() {
+        node_identity.sign();
+    }
     let shutdown = Shutdown::new();
     let signal = shutdown.to_signal();
 

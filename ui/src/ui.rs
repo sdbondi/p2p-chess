@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use minifb::{Key, Window, WindowOptions};
-use p2p_chess_channel::{ChessOperation, MessageChannel, TryRecvError};
+use p2p_chess_channel::{ChessOperation, MessageChannel};
 use tari_comms::types::CommsPublicKey;
 
-use crate::{color::Color, drawable::FrameBuffer, game::GameConfig, screen_manager::ScreenManager};
+use crate::{color::Color, drawable::FrameBuffer, game_screen::GameConfig, screen_manager::ScreenManager};
 
 const BACKGROUND_COLOUR: Color = Color::black();
 
@@ -55,6 +55,7 @@ impl ChessUi {
             window_height: self.window_height as u32,
             light_color: Color::cream(),
             dark_color: Color::dark_green(),
+            save_path: "p2pc-games.json".parse().unwrap(),
         };
 
         let mut screen_manager = ScreenManager::initialize(config, self.channel, self.public_key)?;

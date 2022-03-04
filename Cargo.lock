@@ -1630,6 +1630,7 @@ dependencies = [
  "tari_comms_dht",
  "tari_shutdown",
  "tari_storage",
+ "tari_utilities",
  "tokio",
  "tower",
 ]
@@ -1885,6 +1886,7 @@ name = "p2p-chess"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "env_logger",
  "networking",
  "p2p_chess_channel",
  "rand 0.8.5",
@@ -3304,10 +3306,13 @@ dependencies = [
  "bmp",
  "clipboard",
  "kira",
+ "log",
  "minifb",
  "p2p_chess_channel",
  "pleco",
  "rand 0.8.5",
+ "serde",
+ "serde_json",
  "tari_comms",
  "tari_utilities",
 ]

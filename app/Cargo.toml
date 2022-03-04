@@ -16,3 +16,4 @@ tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
 serde = "1.0.126"
 serde_json = "1.0.64"
 rand = "0.8.4"
+env_logger = "0.8.4"

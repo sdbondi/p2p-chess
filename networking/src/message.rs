@@ -3,10 +3,12 @@ use anyhow::anyhow;
 #[derive(Clone, prost::Message)]
 pub struct ProtoMessage {
     #[prost(uint32, tag = "1")]
+    pub id: u32,
+    #[prost(uint32, tag = "2")]
     pub seq: u32,
-    #[prost(enumeration = "MessageType", tag = "2")]
+    #[prost(enumeration = "MessageType", tag = "3")]
     pub message_type: i32,
-    #[prost(bytes, tag = "3")]
+    #[prost(bytes, tag = "4")]
     pub payload: Vec<u8>,
 }
 
@@ -18,10 +20,11 @@ pub enum MessageType {
 }
 
 impl ProtoMessage {
-    pub fn new<T: prost::Message>(seq: u32, message_type: MessageType, payload: T) -> Self {
+    pub fn new<T: prost::Message>(id: u32, seq: u32, message_type: MessageType, payload: T) -> Self {
         let mut bytes = Vec::with_capacity(payload.encoded_len());
         payload.encode(&mut bytes).unwrap();
         Self {
+            id,
             seq,
             message_type: message_type as i32,
             payload: bytes,
@@ -44,14 +47,16 @@ impl TryFrom<i32> for MessageType {
 
 #[derive(Debug, Clone)]
 pub struct Message<T> {
+    pub id: u32,
     pub seq: u32,
     pub message_type: MessageType,
     pub payload: T,
 }
 
 impl<T: prost::Message> Message<T> {
-    pub fn new(seq: u32, message_type: MessageType, payload: T) -> Self {
+    pub fn new(id: u32, seq: u32, message_type: MessageType, payload: T) -> Self {
         Self {
+            id,
             seq,
             message_type,
             payload,
@@ -61,7 +66,7 @@ impl<T: prost::Message> Message<T> {
     pub fn to_proto_message(&self) -> ProtoMessage {
         let mut bytes = Vec::with_capacity(self.payload.encoded_len());
         self.payload.encode(&mut bytes).unwrap();
-        ProtoMessage::new(self.seq, self.message_type, bytes)
+        ProtoMessage::new(self.id, self.seq, self.message_type, bytes)
     }
 }
 
@@ -71,6 +76,7 @@ impl<T: prost::Message + Default> TryFrom<ProtoMessage> for Message<T> {
     fn try_from(value: ProtoMessage) -> Result<Self, Self::Error> {
         let payload = T::decode(value.payload.as_slice())?;
         Ok(Message {
+            id: value.id,
             seq: value.seq,
             message_type: MessageType::try_from(value.message_type)?,
             payload,
@@ -87,7 +93,9 @@ pub struct NewGameMsg {
 #[derive(Clone, prost::Message)]
 pub struct MoveMsg {
     #[prost(uint32, tag = "1")]
-    pub value: u32,
+    pub mv: u32,
+    #[prost(string, tag = "2")]
+    pub board: String,
 }
 
 #[derive(Clone, prost::Message)]

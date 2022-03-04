@@ -10,6 +10,8 @@ use crate::{
     sprite::SpriteSheet,
 };
 
+pub const INITIAL_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 #[derive(Debug)]
 pub struct ChessBoard {
     frame: Frame,
@@ -33,7 +35,7 @@ impl ChessBoard {
             frame,
             light_colour,
             dark_colour,
-            board: Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap(),
+            board: Board::from_fen(INITIAL_BOARD).unwrap(),
             sprite_sheet,
             player,
             taken_piece: None,
@@ -222,6 +224,13 @@ impl ChessBoard {
 
     pub fn apply_move(&mut self, mv: BitMove) {
         self.board.apply_move(mv)
+    }
+
+    pub fn set_board_state(&mut self, fen: &str) -> &mut Self {
+        if let Ok(b) = Board::from_fen(fen) {
+            self.board = b;
+        }
+        self
     }
 }
 

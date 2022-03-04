@@ -1,4 +1,6 @@
 use minifb::Window;
+use tari_comms::types::CommsPublicKey;
+use tari_utilities::hex::Hex;
 
 use crate::{
     clipboard::Clipboard,
@@ -29,11 +31,10 @@ pub struct StartScreen {
     copy_button: Button,
     labels: Drawables<Label>,
     submitted_public_key: Option<String>,
-    input_error: Option<String>,
 }
 
 impl StartScreen {
-    pub fn new(clipboard: Clipboard, public_key: String) -> Self {
+    pub fn new(clipboard: Clipboard, public_key: CommsPublicKey) -> Self {
         let letters = Letters::new();
 
         let mut title_label = Label::new(Frame::new(495, 10, 500, 40), letters.clone());
@@ -61,7 +62,7 @@ impl StartScreen {
         copy_button.set_text("Copy").on_click(move || {
             Clipboard::initialize()
                 .unwrap()
-                .set_contents(public_key.clone())
+                .set_contents(public_key.to_hex())
                 .unwrap()
         });
 
@@ -71,7 +72,6 @@ impl StartScreen {
             copy_button,
             labels,
             submitted_public_key: None,
-            input_error: None,
         }
     }
 
@@ -89,7 +89,8 @@ impl StartScreen {
     }
 
     pub fn set_input_error<T: Into<String>>(&mut self, msg: T) -> &mut Self {
-        self.input_error = Some(msg.into());
+        // TODO: bleh
+        self.labels.items.last_mut().unwrap().set_text(msg);
         self
     }
 }

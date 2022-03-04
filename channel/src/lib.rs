@@ -5,14 +5,15 @@ use tari_comms::types::CommsPublicKey;
 
 #[derive(Debug, Clone)]
 pub struct ChessOperation {
+    pub game_id: u32,
     pub seq: u32,
     pub opponent: CommsPublicKey,
     pub operation: OperationType,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum OperationType {
     NewGame { player: u8 },
-    MovePlayed(u16),
+    MovePlayed { mv: u16, board: String },
     Resign,
 }
