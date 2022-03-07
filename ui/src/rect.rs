@@ -12,7 +12,16 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn new(frame: Frame, bg_color: Color) -> Self {
+    pub fn new(x: u32, y: u32, w: u32, h: u32, bg_color: Color) -> Self {
+        Self {
+            frame: Frame::new(x, y, w, h),
+            bg_color,
+            border_size: 0,
+            border_color: Color::black(),
+        }
+    }
+
+    pub fn from_frame(frame: Frame, bg_color: Color) -> Self {
         Self {
             frame,
             bg_color,

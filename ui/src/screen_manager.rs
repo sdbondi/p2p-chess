@@ -1,9 +1,9 @@
-use std::fs;
+use std::{fs, path::Path};
 
 use anyhow::anyhow;
 use minifb::Window;
 use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType, TryRecvError};
-use pleco::{BitMove, Board, Player};
+use pleco::{BitMove, Player};
 use rand::{rngs::OsRng, RngCore};
 use tari_comms::types::CommsPublicKey;
 use tari_utilities::hex::Hex;
@@ -35,17 +35,15 @@ impl ScreenManager {
         public_key: CommsPublicKey,
     ) -> anyhow::Result<Self> {
         let clipboard = Clipboard::initialize()?;
-        let mut this = Self {
+        let games = load_games(&config.save_path)?;
+        Ok(Self {
             config,
             active_screen: Screen::Start(StartScreen::new(clipboard.clone(), public_key.clone())),
             public_key,
             clipboard,
             channel,
-            games: GameCollection::default(),
-        };
-        this.load_games()?;
-
-        Ok(this)
+            games,
+        })
     }
 
     fn create_new_game(&mut self, opponent: CommsPublicKey) {
@@ -80,8 +78,10 @@ impl ScreenManager {
     pub fn render(&mut self, window: &Window, buf: &mut FrameBuffer) {
         match self.active_screen {
             Screen::Start(ref mut main_screen) => {
-                main_screen.draw(buf);
                 main_screen.update(window);
+                main_screen.set_games(&self.games);
+                main_screen.draw(buf);
+                let idx = main_screen.show_game_clicked();
                 if let Some(pk) = main_screen.new_game_clicked() {
                     match CommsPublicKey::from_hex(pk) {
                         Ok(pk) => {
@@ -92,6 +92,17 @@ impl ScreenManager {
                             main_screen.set_input_error("Invalid public key");
                         },
                     }
+                }
+                if let Some(idx) = idx {
+                    dbg!(idx);
+                    let game = &self.games[idx];
+                    buf.clear(Color::black());
+                    self.active_screen = Screen::Game(GameScreen::new(
+                        self.config.clone(),
+                        game.player,
+                        game.opponent.clone(),
+                        Some(game.board_fen.clone()),
+                    ));
                 }
             },
             Screen::Game(ref mut game) => {
@@ -170,19 +181,19 @@ impl ScreenManager {
         fs::write(&self.config.save_path, json)?;
         Ok(())
     }
-
-    fn load_games(&mut self) -> anyhow::Result<()> {
-        // TODO: decouple
-        if self.config.save_path.exists() {
-            let mut read = fs::File::open(&self.config.save_path)?;
-            self.games = serde_json::from_reader(&mut read)?;
-        }
-        Ok(())
-    }
 }
 
 #[derive(Debug)]
 enum Screen {
     Start(StartScreen),
     Game(GameScreen),
+}
+
+fn load_games<P: AsRef<Path>>(path: P) -> anyhow::Result<GameCollection> {
+    let mut games = GameCollection::default();
+    if path.as_ref().exists() {
+        let mut read = fs::File::open(path)?;
+        games = serde_json::from_reader(&mut read)?;
+    }
+    Ok(games)
 }

@@ -122,12 +122,10 @@ impl ChessBoard {
         for x in 0..8 {
             for y in 0..8 {
                 Rect::new(
-                    Frame::new(
-                        x * self.frame.w / 8,
-                        y * self.frame.h / 8,
-                        self.frame.w / 8,
-                        self.frame.h / 8,
-                    ),
+                    x * self.frame.w / 8,
+                    y * self.frame.h / 8,
+                    self.frame.w / 8,
+                    self.frame.h / 8,
                     if y % 2 == 0 {
                         if x % 2 == 0 {
                             self.light_colour

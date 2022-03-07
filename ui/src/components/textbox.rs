@@ -24,7 +24,7 @@ impl TextBox {
             value: String::new(),
             text_color: Color::white(),
             rect: {
-                let mut r = Rect::new(dims, Color::dark_grey());
+                let mut r = Rect::from_frame(dims, Color::dark_grey());
                 r.set_border(2, Color::light_grey());
                 r
             },
@@ -59,11 +59,10 @@ impl TextBox {
 
     pub fn update(&mut self, window: &Window) {
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-            let active = self.is_active ||
-                (self.is_in_boundary(x.round() as u32, y.round() as u32) &&
-                    window.get_mouse_down(MouseButton::Left));
-
-            self.set_active(active);
+            if window.get_mouse_down(MouseButton::Left) {
+                let active = self.is_in_boundary(x.round() as u32, y.round() as u32);
+                self.set_active(active);
+            }
         }
 
         if self.is_active {

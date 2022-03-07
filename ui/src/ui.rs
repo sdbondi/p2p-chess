@@ -36,7 +36,7 @@ impl ChessUi {
         }
     }
 
-    pub fn run(mut self) -> anyhow::Result<()> {
+    pub fn run(self) -> anyhow::Result<()> {
         let mut window = Window::new(self.title, self.window_width, self.window_height, self.opts)?;
 
         // ~60fps
@@ -47,7 +47,7 @@ impl ChessUi {
         Ok(())
     }
 
-    fn ui_loop(mut self, mut window: Window) -> anyhow::Result<()> {
+    fn ui_loop(self, mut window: Window) -> anyhow::Result<()> {
         let mut buf = FrameBuffer::new(self.window_width as u32, self.window_height as u32, BACKGROUND_COLOUR);
 
         let config = GameConfig {
@@ -55,6 +55,7 @@ impl ChessUi {
             window_height: self.window_height as u32,
             light_color: Color::cream(),
             dark_color: Color::dark_green(),
+            // TODO
             save_path: "p2pc-games.json".parse().unwrap(),
         };
 

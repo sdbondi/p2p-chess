@@ -1,7 +1,7 @@
-use std::{fmt, marker::PhantomData};
+use std::ops::Index;
 
 use pleco::Player;
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use tari_comms::types::CommsPublicKey;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,6 +64,18 @@ impl GameCollection {
             .map(|(_, g)| g)
             .collect();
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Game> {
+        self.games.iter()
+    }
+}
+
+impl Index<usize> for GameCollection {
+    type Output = Game;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.games.index(index)
+    }
 }
 
 fn serialize_player<S: Serializer>(player: &Player, ser: S) -> Result<S::Ok, S::Error> {
@@ -72,25 +84,9 @@ fn serialize_player<S: Serializer>(player: &Player, ser: S) -> Result<S::Ok, S::
 
 fn deserialize_player<'de, D>(des: D) -> Result<Player, D::Error>
 where D: Deserializer<'de> {
-    struct Visitor<K> {
-        marker: PhantomData<K>,
+    match <u8 as serde::Deserialize>::deserialize(des) {
+        Ok(0) => Ok(Player::Black),
+        Ok(1) => Ok(Player::White),
+        _ => Err(D::Error::custom("invalid player byte")),
     }
-
-    impl<'de> de::Visitor<'de> for Visitor<Player> {
-        type Value = Player;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a u8 repr player")
-        }
-
-        fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
-        where E: de::Error {
-            match v {
-                0 => Ok(Player::Black),
-                1 => Ok(Player::White),
-                _ => Err(E::custom("invalid player byte")),
-            }
-        }
-    }
-    des.deserialize_u8(Visitor { marker: PhantomData })
 }

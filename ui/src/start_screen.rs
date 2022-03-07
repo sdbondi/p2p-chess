@@ -5,8 +5,9 @@ use tari_utilities::hex::Hex;
 use crate::{
     clipboard::Clipboard,
     color::Color,
-    components::{Button, Label, TextBox},
+    components::{Button, Label, ListBox, TextBox},
     drawable::{Drawable, FrameBuffer},
+    game::GameCollection,
     letters::Letters,
     rect::{Frame, Rect},
 };
@@ -29,8 +30,11 @@ pub struct StartScreen {
     public_key_input: TextBox,
     start_button: Button,
     copy_button: Button,
+    show_game: Button,
+    selected_game: Option<usize>,
     labels: Drawables<Label>,
     submitted_public_key: Option<String>,
+    games_selector: ListBox,
 }
 
 impl StartScreen {
@@ -55,23 +59,30 @@ impl StartScreen {
         };
 
         let public_key_input = TextBox::new(Frame::new(10, 200, 750, 40), letters.clone(), clipboard);
-        let mut start_button = Button::new(Rect::new(Frame::new(10, 300, 100, 30), Color::white()), letters.clone());
+        let mut start_button = Button::new(Rect::new(10, 300, 100, 30, Color::white()), letters.clone());
         start_button.set_text("New Game");
 
-        let mut copy_button = Button::new(Rect::new(Frame::new(10, 100, 100, 30), Color::white()), letters);
+        let mut copy_button = Button::new(Rect::new(10, 100, 100, 30, Color::white()), letters.clone());
         copy_button.set_text("Copy").on_click(move || {
             Clipboard::initialize()
                 .unwrap()
                 .set_contents(public_key.to_hex())
                 .unwrap()
         });
+        let mut show_game = Button::new(Rect::new(10, 600, 100, 30, Color::white()), letters.clone());
+        show_game.set_text("Open Game");
+
+        let games_selector = ListBox::new(Frame::new(10, 350, 900, 200), letters);
 
         Self {
             public_key_input,
             start_button,
             copy_button,
             labels,
+            selected_game: None,
             submitted_public_key: None,
+            games_selector,
+            show_game,
         }
     }
 
@@ -79,8 +90,13 @@ impl StartScreen {
         self.public_key_input.update(window);
         self.start_button.update(window);
         self.copy_button.update(window);
+        self.show_game.update(window);
         if self.start_button.was_clicked() {
             self.submitted_public_key = Some(self.public_key_input.value().to_string())
+        }
+        if self.show_game.was_clicked() {
+            dbg!("SHOW GAME CLICKED");
+            self.selected_game = self.games_selector.selected_index();
         }
     }
 
@@ -88,10 +104,19 @@ impl StartScreen {
         self.submitted_public_key.as_deref()
     }
 
+    pub fn show_game_clicked(&self) -> Option<usize> {
+        self.selected_game
+    }
+
     pub fn set_input_error<T: Into<String>>(&mut self, msg: T) -> &mut Self {
         // TODO: bleh
         self.labels.items.last_mut().unwrap().set_text(msg);
         self
+    }
+
+    pub fn set_games(&mut self, games: &GameCollection) {
+        self.games_selector
+            .set_values(games.iter().map(|g| format!("{} {}", g.id, g.opponent)).collect());
     }
 }
 
@@ -101,5 +126,7 @@ impl Drawable for StartScreen {
         self.start_button.draw(buf);
         self.copy_button.draw(buf);
         self.labels.draw(buf);
+        self.games_selector.draw(buf);
+        self.show_game.draw(buf);
     }
 }

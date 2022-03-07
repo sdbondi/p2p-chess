@@ -11,6 +11,7 @@ use std::{
 
 use anyhow::anyhow;
 use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType};
+use rand::{rngs::OsRng, Rng};
 // Re-exports
 pub use tari_comms::{
     multiaddr::Multiaddr,
@@ -33,7 +34,6 @@ use tokio::{sync::mpsc, task};
 use crate::message::{Message, MessageType, MoveMsg, NewGameMsg, ProtoMessage, ResignMsg};
 
 pub struct Networking {
-    node: CommsNode,
     dht: Dht,
     in_msg: mpsc::Receiver<DecryptedDhtMessage>,
 
@@ -83,22 +83,23 @@ impl Networking {
             )
             .unwrap(),
         ];
+        let port = OsRng.gen_range(15000..50000);
         let (node, dht, in_msg) = node::create(
             node_identity.clone(),
             base_path.as_ref().join("db"),
             tor_identity,
-            9999,
+            port,
             seed_peers,
             shutdown_signal,
         )
         .await?;
+        save_json(base_path.as_ref().join("node-identity.json"), node.node_identity_ref())?;
 
         let worker = Self {
-            node,
             dht,
             in_msg,
             channel,
-            node_identity: node_identity.clone(),
+            node_identity: node.node_identity(),
         };
         worker.spawn();
 
@@ -237,7 +238,9 @@ fn load_json<T: serde::de::DeserializeOwned, P: AsRef<Path>>(path: P) -> anyhow:
 }
 
 fn save_json<T: serde::Serialize, P: AsRef<Path>>(path: P, item: &T) -> anyhow::Result<()> {
-    fs::create_dir_all(&path)?;
+    let mut dir = path.as_ref().to_path_buf();
+    dir.pop();
+    fs::create_dir_all(dir)?;
     let buf = serde_json::to_vec(item)?;
     File::create(path)?.write_all(&buf)?;
     Ok(())
