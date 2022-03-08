@@ -18,7 +18,7 @@ const WINDOW_HEIGHT: usize = 90 * 8;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
-    let base_path = env::current_dir()?.join(".p2pchess"); // PathBuf::from_str("/tmp/p2pchess")?;
+    let base_path = env::current_dir()?.join(".p2pchess");
     let node_identity = load_json(base_path.join("node-identity.json"))?
         .map(Arc::new)
         .unwrap_or_else(create_node_identity);
@@ -39,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
             resize: true,
             ..Default::default()
         },
+        base_path.to_path_buf(),
         channel1,
         node_identity.public_key().clone(),
     );

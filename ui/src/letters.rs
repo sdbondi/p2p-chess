@@ -1,4 +1,6 @@
-use std::rc::Rc;
+use std::sync::Arc;
+
+use once_cell::sync::Lazy;
 
 use crate::{
     bitmap::Bitmap,
@@ -8,15 +10,17 @@ use crate::{
     sprite::SpriteSheet,
 };
 
+pub static LETTERS: Lazy<Letters> = Lazy::new(|| Letters::new());
+
 #[derive(Debug, Clone)]
 pub struct Letters {
-    sprite_sheet: Rc<SpriteSheet<char, Bitmap>>,
+    sprite_sheet: Arc<SpriteSheet<char, Bitmap>>,
 }
 
 impl Letters {
     pub fn new() -> Self {
         Self {
-            sprite_sheet: Rc::new(init_letters_sprite()),
+            sprite_sheet: Arc::new(init_letters_sprite()),
         }
     }
 

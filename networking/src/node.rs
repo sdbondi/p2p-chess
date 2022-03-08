@@ -77,8 +77,7 @@ pub async fn create<P: AsRef<Path>>(
         .with_node_identity(node_identity.clone())
         .with_dial_backoff(ConstantBackoff::new(Duration::from_millis(500)))
         .with_peer_storage(peer_database, None)
-        .with_listener_liveness_max_sessions(10)
-        .disable_connection_reaping();
+        .with_listener_liveness_max_sessions(10);
 
     let (inbound_tx, inbound_rx) = mpsc::channel(1);
     let (outbound_tx, outbound_rx) = mpsc::channel(1);
@@ -101,7 +100,7 @@ pub async fn create<P: AsRef<Path>>(
 
     let dht = tari_comms_dht::Dht::builder()
         .with_database_url(DbConnectionUrl::File(database_path.as_ref().join("dht.sqlite")))
-        .set_auto_store_and_forward_requests(false)
+        .set_auto_store_and_forward_requests(true)
         .with_outbound_sender(outbound_tx)
         .enable_auto_join()
         .build(

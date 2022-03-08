@@ -4,7 +4,7 @@ use crate::{
     clipboard::Clipboard,
     color::Color,
     drawable::{Drawable, FrameBuffer},
-    letters::Letters,
+    letters::LETTERS,
     rect::{Frame, Rect},
 };
 
@@ -14,12 +14,11 @@ pub struct TextBox {
     text_color: Color,
     rect: Rect,
     is_active: bool,
-    letters: Letters,
     clipboard: Clipboard,
 }
 
 impl TextBox {
-    pub fn new(dims: Frame, letters: Letters, clipboard: Clipboard) -> Self {
+    pub fn new(dims: Frame, clipboard: Clipboard) -> Self {
         Self {
             value: String::new(),
             text_color: Color::white(),
@@ -29,7 +28,6 @@ impl TextBox {
                 r
             },
             is_active: false,
-            letters,
             clipboard,
         }
     }
@@ -120,7 +118,7 @@ impl TextBox {
 
     fn draw_text(&self, buf: &mut FrameBuffer) {
         let mid = (self.rect.h() / 2) - 10;
-        self.letters.draw_string(
+        LETTERS.draw_string(
             &self.value,
             self.rect.x() + 2,
             self.rect.y() + mid,

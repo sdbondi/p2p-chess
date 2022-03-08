@@ -5,7 +5,7 @@ use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window};
 use crate::{
     color::Color,
     drawable::{Drawable, FrameBuffer},
-    letters::Letters,
+    letters::LETTERS,
     rect::{Frame, Rect},
 };
 
@@ -15,12 +15,11 @@ pub struct ListBox {
     text_color: Color,
     rect: Rect,
     is_active: bool,
-    letters: Letters,
     selected: usize,
 }
 
 impl ListBox {
-    pub fn new(dims: Frame, letters: Letters) -> Self {
+    pub fn new(dims: Frame) -> Self {
         Self {
             values: Vec::new(),
             text_color: Color::white(),
@@ -30,7 +29,6 @@ impl ListBox {
                 r
             },
             is_active: false,
-            letters,
             selected: 0,
         }
     }
@@ -97,17 +95,17 @@ impl ListBox {
             if self.selected == i {
                 Rect::new(
                     self.rect.x() + 1,
-                    self.rect.y() + (i as u32) * 10,
+                    self.rect.y() + (i as u32) * 25,
                     self.rect.w() - 1,
                     22,
                     Color::light_grey(),
                 )
                 .draw(buf);
             }
-            self.letters.draw_string(
+            LETTERS.draw_string(
                 s,
                 self.rect.x() + 2,
-                self.rect.y() + (i as u32) * 10 + 2,
+                self.rect.y() + (i as u32) * 25 - 2,
                 self.text_color,
                 buf,
             );

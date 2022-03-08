@@ -20,7 +20,7 @@ pub enum MessageType {
 }
 
 impl ProtoMessage {
-    pub fn new<T: prost::Message>(id: u32, seq: u32, message_type: MessageType, payload: T) -> Self {
+    pub fn new<T: prost::Message>(id: u32, seq: u32, message_type: MessageType, payload: &T) -> Self {
         let mut bytes = Vec::with_capacity(payload.encoded_len());
         payload.encode(&mut bytes).unwrap();
         Self {
@@ -64,9 +64,7 @@ impl<T: prost::Message> Message<T> {
     }
 
     pub fn to_proto_message(&self) -> ProtoMessage {
-        let mut bytes = Vec::with_capacity(self.payload.encoded_len());
-        self.payload.encode(&mut bytes).unwrap();
-        ProtoMessage::new(self.id, self.seq, self.message_type, bytes)
+        ProtoMessage::new(self.id, self.seq, self.message_type, &self.payload)
     }
 }
 

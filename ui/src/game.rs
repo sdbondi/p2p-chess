@@ -13,6 +13,7 @@ pub struct Game {
     #[serde(serialize_with = "serialize_player", deserialize_with = "deserialize_player")]
     pub player: Player,
     pub result: GameResult,
+    pub last_activity: u64,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -68,6 +69,10 @@ impl GameCollection {
     pub fn iter(&self) -> impl Iterator<Item = &Game> {
         self.games.iter()
     }
+
+    pub fn sort(&mut self) {
+        self.games.sort_by(|a, b| a.last_activity.cmp(&b.last_activity));
+    }
 }
 
 impl Index<usize> for GameCollection {
@@ -85,8 +90,8 @@ fn serialize_player<S: Serializer>(player: &Player, ser: S) -> Result<S::Ok, S::
 fn deserialize_player<'de, D>(des: D) -> Result<Player, D::Error>
 where D: Deserializer<'de> {
     match <u8 as serde::Deserialize>::deserialize(des) {
-        Ok(0) => Ok(Player::Black),
-        Ok(1) => Ok(Player::White),
+        Ok(0) => Ok(Player::White),
+        Ok(1) => Ok(Player::Black),
         _ => Err(D::Error::custom("invalid player byte")),
     }
 }

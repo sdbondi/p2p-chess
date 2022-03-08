@@ -7,7 +7,8 @@ use tari_comms::types::CommsPublicKey;
 pub struct ChessOperation {
     pub game_id: u32,
     pub seq: u32,
-    pub opponent: CommsPublicKey,
+    pub to: CommsPublicKey,
+    pub from: CommsPublicKey,
     pub operation: OperationType,
 }
 

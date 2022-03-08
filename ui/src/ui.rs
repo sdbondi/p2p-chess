@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use minifb::{Key, Window, WindowOptions};
 use p2p_chess_channel::{ChessOperation, MessageChannel};
@@ -15,6 +15,7 @@ pub struct ChessUi {
     opts: WindowOptions,
     channel: MessageChannel<ChessOperation>,
     public_key: CommsPublicKey,
+    base_path: PathBuf,
 }
 
 impl ChessUi {
@@ -23,6 +24,8 @@ impl ChessUi {
         window_width: usize,
         window_height: usize,
         opts: WindowOptions,
+        // TODO: Cleanup - decouple game loading/saving backend from UI
+        base_path: PathBuf,
         channel: MessageChannel<ChessOperation>,
         public_key: CommsPublicKey,
     ) -> Self {
@@ -32,6 +35,7 @@ impl ChessUi {
             window_height,
             opts,
             channel,
+            base_path,
             public_key,
         }
     }
@@ -55,8 +59,7 @@ impl ChessUi {
             window_height: self.window_height as u32,
             light_color: Color::cream(),
             dark_color: Color::dark_green(),
-            // TODO
-            save_path: "p2pc-games.json".parse().unwrap(),
+            save_path: self.base_path.join("p2pc-games.json"),
         };
 
         let mut screen_manager = ScreenManager::initialize(config, self.channel, self.public_key)?;

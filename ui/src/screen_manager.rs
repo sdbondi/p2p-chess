@@ -1,4 +1,8 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use anyhow::anyhow;
 use minifb::Window;
@@ -48,13 +52,15 @@ impl ScreenManager {
 
     fn create_new_game(&mut self, opponent: CommsPublicKey) {
         // TODO: allow player to choose black/white
+        let id = OsRng.next_u32();
         self.active_screen = Screen::Game(GameScreen::new(
+            id,
+            0,
             self.config.clone(),
             Player::White,
             opponent.clone(),
-            None,
+            board::INITIAL_BOARD,
         ));
-        let id = OsRng.next_u32();
         self.games.insert(Game {
             id,
             opponent: opponent.clone(),
@@ -62,12 +68,15 @@ impl ScreenManager {
             seq: 0,
             player: Player::White,
             result: GameResult::None,
+            last_activity: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
         });
+        self.save_games().unwrap();
         self.channel
             .try_send(ChessOperation {
                 game_id: id,
                 seq: 0,
-                opponent,
+                to: opponent,
+                from: self.public_key.clone(),
                 operation: OperationType::NewGame {
                     player: Player::Black as u8,
                 },
@@ -79,6 +88,7 @@ impl ScreenManager {
         match self.active_screen {
             Screen::Start(ref mut main_screen) => {
                 main_screen.update(window);
+                self.games.sort();
                 main_screen.set_games(&self.games);
                 main_screen.draw(buf);
                 let idx = main_screen.show_game_clicked();
@@ -94,20 +104,38 @@ impl ScreenManager {
                     }
                 }
                 if let Some(idx) = idx {
-                    dbg!(idx);
                     let game = &self.games[idx];
+                    dbg!(game);
                     buf.clear(Color::black());
+                    // TODO: clean up game state management in general - just rushing to be able to play this right now
                     self.active_screen = Screen::Game(GameScreen::new(
+                        game.id,
+                        game.seq,
                         self.config.clone(),
                         game.player,
                         game.opponent.clone(),
-                        Some(game.board_fen.clone()),
+                        &game.board_fen,
                     ));
                 }
             },
             Screen::Game(ref mut game) => {
                 game.draw(buf);
                 game.update(&window);
+                if let Some(mv) = game.take_last_move_played() {
+                    dbg!("move played", mv);
+                    self.channel
+                        .try_send(ChessOperation {
+                            game_id: game.game_id(),
+                            seq: game.next_seq(),
+                            to: game.opponent().clone(),
+                            from: self.public_key.clone(),
+                            operation: OperationType::MovePlayed {
+                                mv: mv.get_raw(),
+                                board: game.to_board_fen(),
+                            },
+                        })
+                        .unwrap();
+                }
                 match game.state().game_status() {
                     // TODO: display winner
                     GameStatus::StaleMate | GameStatus::CheckMate(_) | GameStatus::Resign(_) => {
@@ -115,13 +143,20 @@ impl ScreenManager {
                         self.active_screen =
                             Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
                     },
-                    _ => {},
+                    _ => {
+                        if game.was_back_clicked() {
+                            buf.clear(Color::black());
+                            self.active_screen =
+                                Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
+                        }
+                    },
                 }
             },
         }
 
         match self.channel.try_recv() {
             Ok(op) => {
+                dbg!(&op);
                 if let Err(err) = self.apply_operation(op) {
                     log::error!("apply operation failed: {}", err);
                 }
@@ -129,6 +164,7 @@ impl ScreenManager {
             Err(TryRecvError::Empty) => {},
             Err(TryRecvError::Disconnected) => {
                 // TODO
+                panic!("channel disconnected");
             },
         }
     }
@@ -138,28 +174,42 @@ impl ScreenManager {
             OperationType::NewGame { player } => {
                 let game = Game {
                     id: op.game_id,
-                    opponent: op.opponent,
+                    opponent: op.from,
                     board_fen: board::INITIAL_BOARD.to_string(),
                     seq: 1,
                     player: match *player {
-                        0 => Player::Black,
-                        1 => Player::White,
+                        0 => Player::White,
+                        1 => Player::Black,
                         _ => return Err(anyhow!("Invalid player enum")),
                     },
                     result: GameResult::None,
+                    last_activity: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
                 };
 
                 self.games.insert(game);
                 self.save_games()?;
             },
             OperationType::MovePlayed { board, mv } => {
+                dbg!(board, mv);
                 if let Some(game_mut) = self.games.get_mut(op.game_id) {
+                    if op.seq <= game_mut.seq {
+                        dbg!("ignore move", op.seq, game_mut.seq);
+                        return Ok(());
+                    }
                     // TODO: This requires a lot of honesty :P
                     game_mut.board_fen = board.clone();
+                    game_mut.seq += 1;
+                    game_mut.last_activity = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
                     self.save_games()?;
                     if let Screen::Game(ref mut screen) = self.active_screen {
-                        if *screen.opponent() == op.opponent {
-                            screen.apply_move(BitMove::new(*mv));
+                        dbg!(screen.game_id(), op.game_id);
+                        if screen.game_id() == op.game_id {
+                            let mv = BitMove::new(*mv);
+                            log::info!("Move played for active game {}", mv);
+                            screen.set_board_fen(&board);
+                            // screen.apply_move(mv);
+                            // TODO: not great
+                            screen.next_seq();
                         }
                     }
                 }

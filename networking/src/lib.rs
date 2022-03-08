@@ -20,7 +20,6 @@ pub use tari_comms::{
 use tari_comms::{
     peer_manager::{NodeId, Peer},
     types::CommsPublicKey,
-    CommsNode,
 };
 use tari_comms_dht::{
     domain_message::OutboundDomainMessage,
@@ -123,10 +122,11 @@ impl Networking {
     }
 
     async fn handle_operation(&self, op: ChessOperation) -> anyhow::Result<()> {
+        dbg!(&op);
         match op.operation {
             OperationType::NewGame { player } => {
                 self.broadcast_msg(
-                    op.opponent,
+                    op.to,
                     Message::new(op.game_id, op.seq, MessageType::NewGame, NewGameMsg {
                         player: player as u32,
                     }),
@@ -135,7 +135,7 @@ impl Networking {
             },
             OperationType::MovePlayed { board, mv } => {
                 self.broadcast_msg(
-                    op.opponent,
+                    op.to,
                     Message::new(op.game_id, op.seq, MessageType::PlayMove, MoveMsg {
                         mv: mv as u32,
                         board,
@@ -144,11 +144,8 @@ impl Networking {
                 .await?;
             },
             OperationType::Resign => {
-                self.broadcast_msg(
-                    op.opponent,
-                    Message::new(op.game_id, op.seq, MessageType::Resign, ResignMsg),
-                )
-                .await?;
+                self.broadcast_msg(op.to, Message::new(op.game_id, op.seq, MessageType::Resign, ResignMsg))
+                    .await?;
             },
         }
 
@@ -156,10 +153,14 @@ impl Networking {
     }
 
     async fn handle_inbound_message(&self, msg: DecryptedDhtMessage) -> anyhow::Result<()> {
-        let public_key = msg.source_peer.public_key.clone();
+        let src_public_key = msg
+            .authenticated_origin
+            .as_ref()
+            .cloned()
+            .ok_or_else(|| anyhow!("Message origin not authenticated. Ignoring message."))?;
         match msg.success() {
             Some(body) => {
-                let msg = body.decode_part::<ProtoMessage>(0)?.ok_or_else(|| anyhow!("No msg"))?;
+                let msg = body.decode_part::<ProtoMessage>(1)?.ok_or_else(|| anyhow!("No msg"))?;
                 let msg_type = msg.message_type.try_into()?;
                 let op = match msg_type {
                     MessageType::NewGame => {
@@ -167,7 +168,8 @@ impl Networking {
                         ChessOperation {
                             game_id: msg.id,
                             seq: msg.seq,
-                            opponent: public_key,
+                            to: self.node_identity.public_key().clone(),
+                            from: src_public_key,
                             operation: OperationType::NewGame {
                                 player: msg.payload.player as u8,
                             },
@@ -178,7 +180,8 @@ impl Networking {
                         ChessOperation {
                             game_id: msg.id,
                             seq: msg.seq,
-                            opponent: public_key,
+                            to: self.node_identity.public_key().clone(),
+                            from: src_public_key,
                             operation: OperationType::MovePlayed {
                                 mv: msg.payload.mv as u16,
                                 board: msg.payload.board,
@@ -190,7 +193,8 @@ impl Networking {
                         ChessOperation {
                             game_id: msg.id,
                             seq: msg.seq,
-                            opponent: public_key,
+                            to: self.node_identity.public_key().clone(),
+                            from: src_public_key,
                             operation: OperationType::Resign,
                         }
                     },

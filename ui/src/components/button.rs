@@ -6,26 +6,24 @@ use crate::{
     color::Color,
     components::handler::ClickHandler,
     drawable::{Drawable, FrameBuffer},
-    letters::Letters,
+    letters::LETTERS,
     rect::Rect,
 };
 
 pub struct Button {
     rect: Rect,
     text: String,
-    letters: Letters,
     is_disabled: bool,
     click: Option<()>,
     on_click: Option<Box<dyn ClickHandler>>,
 }
 
 impl Button {
-    pub fn new(rect: Rect, letters: Letters) -> Self {
+    pub fn new(rect: Rect) -> Self {
         Self {
             rect,
             text: "Button".to_string(),
             is_disabled: false,
-            letters,
             click: None,
             on_click: None,
         }
@@ -71,7 +69,7 @@ impl Button {
         let half_text_w = self.text.len() as u32 * 11 / 2;
         let x = self.rect.x() + (self.rect.w() / 2) - half_text_w;
         let y = self.rect.y() + (self.rect.h() / 2) - 8;
-        self.letters.draw_string(&self.text, x, y, Color::black(), buf);
+        LETTERS.draw_string(&self.text, x, y, Color::black(), buf);
     }
 }
 
@@ -87,7 +85,6 @@ impl Debug for Button {
         f.debug_struct("Button")
             .field("rect", &format!("{:?}", self.rect))
             .field("text", &format!("{:?}", self.text))
-            .field("letters", &format!("{:?}", self.letters))
             .field("is_disabled", &format!("{:?}", self.is_disabled))
             .field("on_click", &"...")
             .finish()

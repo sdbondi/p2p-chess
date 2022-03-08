@@ -39,3 +39,17 @@ impl<T> MessageChannel<T> {
         self.sender.try_send(value)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        let (mut ltr, mut rtl) = channel(1);
+        ltr.try_send(1).unwrap();
+        assert_eq!(rtl.try_recv().unwrap(), 1);
+        rtl.try_send(2).unwrap();
+        assert_eq!(ltr.try_recv().unwrap(), 2);
+    }
+}

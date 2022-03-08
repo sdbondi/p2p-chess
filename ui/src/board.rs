@@ -42,6 +42,10 @@ impl ChessBoard {
         }
     }
 
+    pub fn height(&self) -> u32 {
+        self.frame.h
+    }
+
     pub fn take_piece_at(&mut self, x: u32, y: u32) -> Option<pleco::Piece> {
         let sq = self.coords_to_sq(x, y)?;
         match self.board.piece_at_sq(sq) {
@@ -62,23 +66,23 @@ impl ChessBoard {
         self.taken_piece = None;
     }
 
-    pub fn make_move_to(&mut self, dest: SQ) -> bool {
+    pub fn make_move_to(&mut self, dest: SQ) -> Option<BitMove> {
         if let Some((src, _)) = self.taken_piece {
             let all_moves = self.board.generate_moves();
             if let Some(mv) = all_moves.iter().find(|m| m.get_src() == src && m.get_dest() == dest) {
                 dbg!(src.to_string(), dest.to_string(), mv.to_string());
                 self.board.apply_move(*mv);
-                return true;
+                return Some(*mv);
             } else {
                 if let Some(castle) = self.castle_move(src, dest) {
                     dbg!(src.to_string(), dest.to_string(), castle);
                     self.board.apply_move(castle);
-                    return true;
+                    return Some(castle);
                 }
             }
         }
         self.return_taken_piece();
-        false
+        None
     }
 
     pub fn castle_move(&self, src: SQ, dest: SQ) -> Option<BitMove> {
@@ -229,6 +233,10 @@ impl ChessBoard {
             self.board = b;
         }
         self
+    }
+
+    pub fn to_fen(&self) -> String {
+        self.board.fen()
     }
 }
 
