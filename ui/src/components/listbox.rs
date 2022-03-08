@@ -28,7 +28,7 @@ impl ListBox {
                 r.set_border(2, Color::light_grey());
                 r
             },
-            is_active: false,
+            is_active: true,
             selected: 0,
         }
     }
