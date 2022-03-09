@@ -69,7 +69,10 @@ impl StartScreen {
         let mut show_game = Button::new(Rect::new(10, 580, 100, 30, Color::white()));
         show_game.set_text("Open Game");
 
-        let games_selector = ListBox::new(Frame::new(10, 350, 900, 200));
+        let mut games_selector = ListBox::new(Frame::new(10, 350, 900, 200));
+        // Always capture keys
+        games_selector.set_active(true);
+
         Self {
             public_key_input,
             start_button,

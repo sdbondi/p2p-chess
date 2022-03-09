@@ -69,6 +69,9 @@ fn init_letters_sprite() -> SpriteSheet<char, Bitmap> {
     }
     sprite_sheet.add_area('?', letters.offset_xy(165, 40));
     sprite_sheet.add_area('!', letters.offset_xy(180, 40));
+    sprite_sheet.add_area(':', letters.offset_xy(195, 40));
+    sprite_sheet.add_area('-', letters.offset_xy(210, 40));
+    sprite_sheet.add_area('#', letters.offset_xy(225, 40));
 
     sprite_sheet
 }

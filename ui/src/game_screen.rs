@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    fmt::{Display, Formatter},
+    path::PathBuf,
+};
 
 use minifb::{MouseButton, MouseMode, Window};
 use pleco::{BitMove, Player};
@@ -130,13 +133,18 @@ impl GameScreen {
             .set_text(format!("MOVE: {}", self.seq))
             .set_bg_color(Color::black());
 
-        let mut label3 = Label::new(Frame::new(self.board.height() + 10, 130, 100, 20));
+        let mut label3 = Label::new(Frame::new(self.board.height() + 10, 140, 100, 20));
         label3
             .set_text(format!("Turn: {}", self.board.turn()))
             .set_bg_color(Color::black());
 
+        let mut label4 = Label::new(Frame::new(self.board.height() + 10, 170, 100, 20));
+        label4
+            .set_text(format!("Status: {}", self.state().game_status()))
+            .set_bg_color(Color::black());
+
         Drawables {
-            items: vec![label1, label2, label3],
+            items: vec![label1, label2, label3, label4],
         }
     }
 }
@@ -271,5 +279,16 @@ pub enum GameStatus {
 impl Default for GameStatus {
     fn default() -> Self {
         Self::InProgress
+    }
+}
+
+impl Display for GameStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GameStatus::InProgress => write!(f, "In progress"),
+            GameStatus::StaleMate => write!(f, "Stale mate"),
+            GameStatus::CheckMate(player) => write!(f, "Checkmate! {} won", player),
+            GameStatus::Resign(player) => write!(f, "{} resigned", player),
+        }
     }
 }

@@ -28,7 +28,7 @@ impl ListBox {
                 r.set_border(2, Color::light_grey());
                 r
             },
-            is_active: true,
+            is_active: false,
             selected: 0,
         }
     }
@@ -61,8 +61,20 @@ impl ListBox {
     pub fn update(&mut self, window: &Window) {
         if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
             if window.get_mouse_down(MouseButton::Left) {
-                let active = self.is_in_boundary(x.round() as u32, y.round() as u32);
+                let x = x.round() as u32;
+                let y = y.round() as u32;
+                let active = self.is_in_boundary(x, y);
                 self.set_active(active);
+                if active {
+                    if let Some(rel_y) = y.checked_sub(self.rect.y()) {
+                        if rel_y <= self.rect.h() {
+                            let idx = (rel_y / 25) as usize;
+                            if idx < self.values.len() {
+                                self.selected = idx;
+                            }
+                        }
+                    }
+                }
             }
         }
 

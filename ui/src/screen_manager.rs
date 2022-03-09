@@ -18,7 +18,7 @@ use crate::{
     color::Color,
     drawable::{Drawable, FrameBuffer},
     game::{Game, GameCollection, GameResult},
-    game_screen::{GameConfig, GameScreen, GameStatus},
+    game_screen::{GameConfig, GameScreen},
     start_screen::StartScreen,
 };
 
@@ -135,24 +135,21 @@ impl ScreenManager {
                             },
                         })
                         .unwrap();
+                    if let Some(game_mut) = self.games.get_mut(game.game_id()) {
+                        game_mut.board_fen = game.to_board_fen();
+                        game_mut.last_activity = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                    }
                 }
-                match game.state().game_status() {
-                    // TODO: display winner
-                    GameStatus::StaleMate | GameStatus::CheckMate(_) | GameStatus::Resign(_) => {
-                        buf.clear(Color::black());
-                        self.active_screen =
-                            Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
-                    },
-                    _ => {
-                        if game.was_back_clicked() {
-                            buf.clear(Color::black());
-                            self.active_screen =
-                                Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
-                        }
-                    },
+
+                if game.was_back_clicked() {
+                    buf.clear(Color::black());
+                    self.active_screen =
+                        Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
                 }
             },
         }
+
+        let _ = self.save_games();
 
         match self.channel.try_recv() {
             Ok(op) => {
@@ -176,7 +173,7 @@ impl ScreenManager {
                     id: op.game_id,
                     opponent: op.from,
                     board_fen: board::INITIAL_BOARD.to_string(),
-                    seq: 1,
+                    seq: 0,
                     player: match *player {
                         0 => Player::White,
                         1 => Player::Black,

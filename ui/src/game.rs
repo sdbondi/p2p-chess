@@ -60,8 +60,8 @@ impl GameCollection {
             .games
             .drain(..)
             .enumerate()
-            // Keep last 10, after that only keep active games
-            .filter(|(i, g)| *i < 10 || !g.has_completed())
+            // Keep last 3, after that only keep active games
+            .filter(|(i, g)| *i < 3 || !g.has_completed())
             .map(|(_, g)| g)
             .collect();
     }
@@ -71,7 +71,7 @@ impl GameCollection {
     }
 
     pub fn sort(&mut self) {
-        self.games.sort_by(|a, b| a.last_activity.cmp(&b.last_activity));
+        self.games.sort_by(|a, b| b.last_activity.cmp(&a.last_activity));
     }
 }
 

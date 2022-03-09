@@ -41,9 +41,9 @@ impl Color {
 impl Color {
     pub const fn white() -> Self {
         Self {
-            r: 0xff,
-            g: 0xff,
-            b: 0xff,
+            r: 255,
+            g: 253,
+            b: 253,
             a: 0xff,
         }
     }
@@ -71,6 +71,15 @@ impl Color {
             r: 119,
             g: 148,
             b: 86,
+            a: 0xff,
+        }
+    }
+
+    pub const fn dark_blue() -> Self {
+        Self {
+            r: 0,
+            g: 81,
+            b: 101,
             a: 0xff,
         }
     }

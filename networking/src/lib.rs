@@ -7,6 +7,7 @@ use std::{
     io::{Read, Write},
     path::Path,
     sync::Arc,
+    time::Duration,
 };
 
 use anyhow::anyhow;
@@ -93,6 +94,10 @@ impl Networking {
         )
         .await?;
         save_json(base_path.as_ref().join("node-identity.json"), node.node_identity_ref())?;
+
+        node.connectivity()
+            .wait_for_connectivity(Duration::from_secs(30))
+            .await?;
 
         let worker = Self {
             dht,

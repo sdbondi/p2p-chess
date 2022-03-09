@@ -57,8 +57,8 @@ impl ChessUi {
         let config = GameConfig {
             window_width: self.window_width as u32,
             window_height: self.window_height as u32,
-            light_color: Color::cream(),
-            dark_color: Color::dark_green(),
+            light_color: Color::white(),
+            dark_color: Color::dark_blue(),
             save_path: self.base_path.join("p2pc-games.json"),
         };
 
