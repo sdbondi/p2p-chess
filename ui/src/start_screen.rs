@@ -1,6 +1,6 @@
 use minifb::Window;
 use tari_comms::types::CommsPublicKey;
-use tari_utilities::hex::Hex;
+use tari_crypto::tari_utilities::hex::Hex;
 
 use crate::{
     clipboard::Clipboard,

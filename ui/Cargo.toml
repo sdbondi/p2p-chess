@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tari_comms = { path = "../../tari/comms" }
-tari_utilities = "0.3.0"
+tari_crypto = { git = "https://github.com/tari-project/tari-crypto.git", tag = "v0.12.4" }
 p2p_chess_channel = { path = "../channel" }
 
 anyhow = "1.0.41"

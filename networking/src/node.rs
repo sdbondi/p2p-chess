@@ -76,8 +76,7 @@ pub async fn create<P: AsRef<Path>>(
         })
         .with_node_identity(node_identity.clone())
         .with_dial_backoff(ConstantBackoff::new(Duration::from_millis(500)))
-        .with_peer_storage(peer_database, None)
-        .with_listener_liveness_max_sessions(10);
+        .with_peer_storage(peer_database, None);
 
     let (inbound_tx, inbound_rx) = mpsc::channel(1);
     let (outbound_tx, outbound_rx) = mpsc::channel(1);
