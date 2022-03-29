@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::anyhow;
 use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType};
-use rand::{rngs::OsRng, Rng};
+use rand::{rngs::OsRng, Rng, RngCore};
 // Re-exports
 pub use tari_comms::{
     multiaddr::Multiaddr,
@@ -31,7 +31,7 @@ use tari_comms_dht::{
 use tari_shutdown::ShutdownSignal;
 use tokio::{sync::mpsc, task};
 
-use crate::message::{Message, MessageType, MoveMsg, NewGameMsg, ProtoMessage, ResignMsg};
+use crate::message::{Message, MessageType, MoveMsg, NewGameMsg, ProtoMessage, ResignMsg, SyncMsg};
 
 pub struct Networking {
     dht: Dht,
@@ -51,12 +51,11 @@ impl Networking {
         fs::create_dir_all(base_path.as_ref())?;
         let tor_identity = load_json(base_path.as_ref().join("tor.json"))?;
         // TODO
-        let seed_peers = vec![
-            peer_from_str(
-                "c2eca9cf32261a1343e21ed718e79f25bfc74386e9305350b06f62047f519347::/onion3/6yxqk2ybo43u73ukfhyc42qn25echn4zegjpod2ccxzr2jd5atipwzqd:18141",
-            )
-            .unwrap(),
-        ];
+        let seed_peers = vec![peer_from_str(
+            "c2eca9cf32261a1343e21ed718e79f25bfc74386e9305350b06f62047f519347::/onion3/\
+             6yxqk2ybo43u73ukfhyc42qn25echn4zegjpod2ccxzr2jd5atipwzqd:18141",
+        )
+        .unwrap()];
         let port = OsRng.gen_range(15000..50000);
         let (node, dht, in_msg) = node::create(
             node_identity.clone(),
@@ -126,6 +125,13 @@ impl Networking {
                 self.broadcast_msg(op.to, Message::new(op.game_id, op.seq, MessageType::Resign, ResignMsg))
                     .await?;
             },
+            OperationType::Sync { board } => {
+                self.broadcast_msg(
+                    op.to,
+                    Message::new(op.game_id, op.seq, MessageType::Sync, SyncMsg { board }),
+                )
+                .await?;
+            },
         }
 
         Ok(())
@@ -177,6 +183,18 @@ impl Networking {
                             operation: OperationType::Resign,
                         }
                     },
+                    MessageType::Sync => {
+                        let msg = Message::<SyncMsg>::try_from(msg)?;
+                        ChessOperation {
+                            game_id: msg.id,
+                            seq: msg.seq,
+                            to: self.node_identity.public_key().clone(),
+                            from: src_public_key,
+                            operation: OperationType::Sync {
+                                board: msg.payload.board,
+                            },
+                        }
+                    },
                 };
 
                 self.channel.send(op).await?;
@@ -195,13 +213,14 @@ impl Networking {
         msg: Message<T>,
     ) -> anyhow::Result<()> {
         let msg = msg.to_proto_message();
+        let num = OsRng.next_u32() as i32;
         self.dht
             .outbound_requester()
-            .propagate(
+            .broadcast(
                 public_key.clone().into(),
-                OutboundEncryption::EncryptFor(Box::new(public_key)),
+                OutboundEncryption::EncryptFor(Box::new(public_key.clone())),
                 vec![],
-                OutboundDomainMessage::new(999, msg),
+                OutboundDomainMessage::new(num, msg.clone()),
             )
             .await?;
 

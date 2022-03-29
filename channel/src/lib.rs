@@ -1,6 +1,6 @@
 mod channel;
 
-pub use channel::{channel, MessageChannel, SendError, TryRecvError};
+pub use channel::{channel, MessageChannel, SendError, TryRecvError, TrySendError};
 use tari_comms::types::CommsPublicKey;
 
 #[derive(Debug, Clone)]
@@ -17,4 +17,5 @@ pub enum OperationType {
     NewGame { player: u8 },
     MovePlayed { mv: u16, board: String },
     Resign,
+    Sync { board: String },
 }

@@ -71,6 +71,11 @@ impl GameScreen {
         self.id
     }
 
+    pub fn set_seq(&mut self, seq: u32) -> &mut Self {
+        self.seq = seq;
+        self
+    }
+
     pub fn next_seq(&mut self) -> u32 {
         self.seq += 1;
         self.seq
@@ -106,6 +111,10 @@ impl GameScreen {
     pub fn apply_move(&mut self, mv: BitMove) {
         dbg!("apply_move", mv);
         self.board.apply_move(mv);
+    }
+
+    pub fn seq(&self) -> u32 {
+        self.seq
     }
 
     pub fn opponent(&self) -> &CommsPublicKey {

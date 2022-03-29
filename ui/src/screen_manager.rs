@@ -1,12 +1,12 @@
 use std::{
     fs,
     path::Path,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::anyhow;
 use minifb::Window;
-use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType, TryRecvError};
+use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType, TryRecvError, TrySendError};
 use pleco::{BitMove, Player};
 use rand::{rngs::OsRng, RngCore};
 use tari_comms::types::CommsPublicKey;
@@ -30,6 +30,7 @@ pub struct ScreenManager {
     public_key: CommsPublicKey,
     channel: MessageChannel<ChessOperation>,
     games: GameCollection,
+    last_sync: Instant,
 }
 
 impl ScreenManager {
@@ -47,6 +48,7 @@ impl ScreenManager {
             clipboard,
             channel,
             games,
+            last_sync: Instant::now(),
         })
     }
 
@@ -71,17 +73,16 @@ impl ScreenManager {
             last_activity: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
         });
         self.save_games().unwrap();
-        self.channel
-            .try_send(ChessOperation {
-                game_id: id,
-                seq: 0,
-                to: opponent,
-                from: self.public_key.clone(),
-                operation: OperationType::NewGame {
-                    player: Player::Black as u8,
-                },
-            })
-            .unwrap();
+        self.send_message(ChessOperation {
+            game_id: id,
+            seq: 0,
+            to: opponent,
+            from: self.public_key.clone(),
+            operation: OperationType::NewGame {
+                player: Player::Black as u8,
+            },
+        })
+        .unwrap();
     }
 
     pub fn render(&mut self, window: &Window, buf: &mut FrameBuffer) {
@@ -123,18 +124,17 @@ impl ScreenManager {
                 game.update(&window);
                 if let Some(mv) = game.take_last_move_played() {
                     dbg!("move played", mv);
-                    self.channel
-                        .try_send(ChessOperation {
-                            game_id: game.game_id(),
-                            seq: game.next_seq(),
-                            to: game.opponent().clone(),
-                            from: self.public_key.clone(),
-                            operation: OperationType::MovePlayed {
-                                mv: mv.get_raw(),
-                                board: game.to_board_fen(),
-                            },
-                        })
-                        .unwrap();
+                    let msg = ChessOperation {
+                        game_id: game.game_id(),
+                        seq: game.next_seq(),
+                        to: game.opponent().clone(),
+                        from: self.public_key.clone(),
+                        operation: OperationType::MovePlayed {
+                            mv: mv.get_raw(),
+                            board: game.to_board_fen(),
+                        },
+                    };
+                    self.channel.try_send(msg).unwrap();
                     if let Some(game_mut) = self.games.get_mut(game.game_id()) {
                         game_mut.board_fen = game.to_board_fen();
                         game_mut.last_activity = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
@@ -145,14 +145,29 @@ impl ScreenManager {
                     buf.clear(Color::black());
                     self.active_screen =
                         Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
+                } else if self.last_sync.elapsed() > Duration::from_secs(10) {
+                    let msg = ChessOperation {
+                        game_id: game.game_id(),
+                        seq: game.seq(),
+                        to: game.opponent().clone(),
+                        from: self.public_key.clone(),
+                        operation: OperationType::Sync {
+                            board: game.to_board_fen(),
+                        },
+                    };
+                    self.send_message(msg).unwrap();
+                    self.last_sync = Instant::now();
                 }
             },
         }
 
-        let _ = self.save_games();
+        if let Err(err) = self.save_games() {
+            log::error!("save failed: {}", err);
+        }
 
         match self.channel.try_recv() {
             Ok(op) => {
+                self.last_sync = Instant::now();
                 dbg!(&op);
                 if let Err(err) = self.apply_operation(op) {
                     log::error!("apply operation failed: {}", err);
@@ -195,7 +210,7 @@ impl ScreenManager {
                     }
                     // TODO: This requires a lot of honesty :P
                     game_mut.board_fen = board.clone();
-                    game_mut.seq += 1;
+                    game_mut.seq = op.seq;
                     game_mut.last_activity = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
                     self.save_games()?;
                     if let Screen::Game(ref mut screen) = self.active_screen {
@@ -203,10 +218,7 @@ impl ScreenManager {
                         if screen.game_id() == op.game_id {
                             let mv = BitMove::new(*mv);
                             log::info!("Move played for active game {}", mv);
-                            screen.set_board_fen(&board);
-                            // screen.apply_move(mv);
-                            // TODO: not great
-                            screen.next_seq();
+                            screen.set_board_fen(&board).set_seq(op.seq);
                         }
                     }
                 }
@@ -216,9 +228,35 @@ impl ScreenManager {
                     game_mut.result = GameResult::TheyResigned;
                 }
             },
+            OperationType::Sync { board } => {
+                if let Some(game_mut) = self.games.get_mut(op.game_id) {
+                    if op.seq < game_mut.seq {
+                        // Send a message back with our state
+                        let msg = ChessOperation {
+                            game_id: game_mut.id,
+                            seq: game_mut.seq,
+                            to: game_mut.opponent.clone(),
+                            from: self.public_key.clone(),
+                            operation: OperationType::Sync {
+                                board: game_mut.board_fen.clone(),
+                            },
+                        };
+                        self.send_message(msg).unwrap();
+                    } else {
+                        // Update our game state
+                        game_mut.board_fen = board.clone();
+                        game_mut.seq = op.seq;
+                        self.save_games()?;
+                    }
+                }
+            },
         }
 
         Ok(())
+    }
+
+    fn send_message(&mut self, msg: ChessOperation) -> Result<(), TrySendError<ChessOperation>> {
+        self.channel.try_send(msg)
     }
 
     fn save_games(&mut self) -> anyhow::Result<()> {

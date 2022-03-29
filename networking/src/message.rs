@@ -17,6 +17,7 @@ pub enum MessageType {
     NewGame = 0,
     PlayMove = 1,
     Resign = 2,
+    Sync = 3,
 }
 
 impl ProtoMessage {
@@ -40,6 +41,7 @@ impl TryFrom<i32> for MessageType {
             0 => Ok(MessageType::NewGame),
             1 => Ok(MessageType::PlayMove),
             2 => Ok(MessageType::Resign),
+            3 => Ok(MessageType::Sync),
             _ => Err(anyhow!("Invalid message type {}", value)),
         }
     }
@@ -98,3 +100,9 @@ pub struct MoveMsg {
 
 #[derive(Clone, prost::Message)]
 pub struct ResignMsg;
+
+#[derive(Clone, prost::Message)]
+pub struct SyncMsg{
+    #[prost(string, tag = "1")]
+    pub board: String,
+}
