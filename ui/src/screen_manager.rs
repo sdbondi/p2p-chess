@@ -203,7 +203,7 @@ impl ScreenManager {
                         if screen.game_id() == op.game_id {
                             let mv = BitMove::new(*mv);
                             log::info!("Move played for active game {}", mv);
-                            screen.set_board_fen(&board);
+                            screen.set_board_state(&board, mv);
                             // screen.apply_move(mv);
                             // TODO: not great
                             screen.next_seq();

@@ -101,6 +101,15 @@ impl Color {
         Self::grey(0x50)
     }
 
+    pub const fn yellow() -> Self {
+        Self {
+            r: 181,
+            g: 177,
+            b: 56,
+            a: 0xff,
+        }
+    }
+
     pub const fn cream() -> Self {
         Self {
             r: 234,
