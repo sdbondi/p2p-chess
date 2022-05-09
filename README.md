@@ -30,3 +30,8 @@ then run
 # and saved games.
 p2p-chess
 ```
+
+## Status
+
+This is very alpha toy software and has been put together as quickly as possible. There are bugs and there are
+no guarantees that you'll be able to finish each game. Bug reports are appreciated!
