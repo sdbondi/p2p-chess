@@ -26,7 +26,7 @@ tor  --controlport 127.0.0.1:9051 --SocksPort 9050
 then run
 
 ```shell
-# Simply run p2p-chess, `.p2p-chess` will be created in that folder with your secret network identity
+# Simply run p2p-chess, `.p2pchess` will be created in that folder with your secret network identity
 # and saved games.
 p2p-chess
 ```
