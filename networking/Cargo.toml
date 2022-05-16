@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tari_comms = { path = "../../tari/comms/core" }
-tari_comms_dht = { path = "../../tari/comms/dht" }
+tari_comms_dht = { path = "../../tari/comms/dht", features=["bundled-sqlite"] }
 tari_storage = { path = "../../tari/infrastructure/storage" }
 tari_shutdown = { path = "../../tari/infrastructure/shutdown" }
 tari_crypto = { git = "https://github.com/tari-project/tari-crypto.git", tag = "v0.13.0" }
