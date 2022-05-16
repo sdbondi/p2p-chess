@@ -70,7 +70,7 @@ impl ScreenManager {
             seq: 0,
             player: Player::White,
             result: GameResult::None,
-            last_activity: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            last_activity: current_timestamp(),
         });
         self.save_games().unwrap();
         self.send_message(ChessOperation {
@@ -137,7 +137,7 @@ impl ScreenManager {
                     self.channel.try_send(msg).unwrap();
                     if let Some(game_mut) = self.games.get_mut(game.game_id()) {
                         game_mut.board_fen = game.to_board_fen();
-                        game_mut.last_activity = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                        game_mut.last_activity = current_timestamp();
                     }
                 }
 
@@ -218,7 +218,7 @@ impl ScreenManager {
                         if screen.game_id() == op.game_id {
                             let mv = BitMove::new(*mv);
                             log::info!("Move played for active game {}", mv);
-                            screen.set_board_state(&board, mv).set_seq(op.seq);
+                            screen.set_board_state(&board, Some(mv)).set_seq(op.seq);
                         }
                     }
                 }
@@ -246,6 +246,8 @@ impl ScreenManager {
                         // Update our game state
                         game_mut.board_fen = board.clone();
                         game_mut.seq = op.seq;
+                        game_mut.last_activity = current_timestamp();
+                        self.active_screen.refresh_game(&*game_mut);
                         self.save_games()?;
                     }
                 }
@@ -274,6 +276,19 @@ enum Screen {
     Game(GameScreen),
 }
 
+impl Screen {
+    pub fn refresh_game(&mut self, game: &Game) {
+        match self {
+            Screen::Start(_) => {},
+            Screen::Game(g) => {
+                if g.game_id() == game.id {
+                    g.set_board_state(&game.board_fen, None);
+                }
+            },
+        }
+    }
+}
+
 fn load_games<P: AsRef<Path>>(path: P) -> anyhow::Result<GameCollection> {
     let mut games = GameCollection::default();
     if path.as_ref().exists() {
@@ -281,4 +296,8 @@ fn load_games<P: AsRef<Path>>(path: P) -> anyhow::Result<GameCollection> {
         games = serde_json::from_reader(&mut read)?;
     }
     Ok(games)
+}
+
+fn current_timestamp() -> u64 {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
 }

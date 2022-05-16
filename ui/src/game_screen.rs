@@ -81,8 +81,11 @@ impl GameScreen {
         self.seq
     }
 
-    pub fn set_board_state(&mut self, fen: &str, mv: BitMove) -> &mut Self {
-        self.board.set_board_state(fen).set_last_move(mv);
+    pub fn set_board_state(&mut self, fen: &str, mv: Option<BitMove>) -> &mut Self {
+        self.board.set_board_state(fen);
+        if let Some(mv) = mv {
+            self.board.set_last_move(mv);
+        }
         self
     }
 
