@@ -218,7 +218,7 @@ impl ScreenManager {
                         if screen.game_id() == op.game_id {
                             let mv = BitMove::new(*mv);
                             log::info!("Move played for active game {}", mv);
-                            screen.set_board_fen(&board).set_seq(op.seq);
+                            screen.set_board_state(&board, mv).set_seq(op.seq);
                         }
                     }
                 }

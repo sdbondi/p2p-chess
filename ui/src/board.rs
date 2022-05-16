@@ -21,6 +21,7 @@ pub struct ChessBoard {
     sprite_sheet: SpriteSheet<&'static str, Bitmap>,
     player: Player,
     taken_piece: Option<(SQ, Piece)>,
+    last_move: Option<BitMove>,
 }
 
 impl ChessBoard {
@@ -39,6 +40,7 @@ impl ChessBoard {
             sprite_sheet,
             player,
             taken_piece: None,
+            last_move: None,
         }
     }
 
@@ -125,26 +127,31 @@ impl ChessBoard {
     fn draw_squares(&self, buf: &mut FrameBuffer) {
         for x in 0..8 {
             for y in 0..8 {
-                Rect::new(
-                    x * self.frame.w / 8,
-                    y * self.frame.h / 8,
-                    self.frame.w / 8,
-                    self.frame.h / 8,
-                    if y % 2 == 0 {
-                        if x % 2 == 0 {
-                            self.light_colour
-                        } else {
-                            self.dark_colour
-                        }
+                let mut colour = if y % 2 == 0 {
+                    if x % 2 == 0 {
+                        self.light_colour
                     } else {
-                        if x % 2 == 0 {
-                            self.dark_colour
-                        } else {
-                            self.light_colour
+                        self.dark_colour
+                    }
+                } else {
+                    if x % 2 == 0 {
+                        self.dark_colour
+                    } else {
+                        self.light_colour
+                    }
+                };
+                let x = x * self.frame.w / 8;
+                let y = y * self.frame.h / 8;
+
+                if let Some(mv) = self.last_move {
+                    if let Some(sq) = self.coords_to_sq(x, y) {
+                        if mv.get_src() == sq || mv.get_dest() == sq {
+                            colour = Color::yellow();
                         }
-                    },
-                )
-                .draw(buf);
+                    }
+                }
+
+                Rect::new(x, y, self.frame.w / 8, self.frame.h / 8, colour).draw(buf);
             }
         }
     }
@@ -232,6 +239,11 @@ impl ChessBoard {
         if let Ok(b) = Board::from_fen(fen) {
             self.board = b;
         }
+        self
+    }
+
+    pub fn set_last_move(&mut self, mv: BitMove) -> &mut Self {
+        self.last_move = Some(mv);
         self
     }
 

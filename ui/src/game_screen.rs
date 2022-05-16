@@ -81,8 +81,8 @@ impl GameScreen {
         self.seq
     }
 
-    pub fn set_board_fen(&mut self, fen: &str) -> &mut Self {
-        self.board.set_board_state(fen);
+    pub fn set_board_state(&mut self, fen: &str, mv: BitMove) -> &mut Self {
+        self.board.set_board_state(fen).set_last_move(mv);
         self
     }
 
@@ -173,8 +173,6 @@ impl Drawable for GameScreen {
                             mouse_y.saturating_sub(offset_y),
                             buf,
                         );
-                        // TODO: good UX
-                        // board.highlight_square_at(mouse_x, mouse_y, buf);
                     },
                     None => {
                         if self.board.take_piece_at(mouse_x, mouse_y).is_some() {
@@ -189,6 +187,7 @@ impl Drawable for GameScreen {
                     Some(sq) => {
                         if let Some(mv) = self.board.make_move_to(sq) {
                             self.last_move_played = Some(mv);
+                            self.board.set_last_move(mv);
                         } else {
                             self.board.return_taken_piece();
                         }
