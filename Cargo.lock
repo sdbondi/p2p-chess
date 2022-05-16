@@ -1290,6 +1290,7 @@ version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "290b64917f8b0cb885d9de0f9959fe1f775d7fa12f1da2db9001c1c8ab60f89d"
 dependencies = [
+ "cc",
  "pkg-config",
  "vcpkg",
 ]
@@ -2887,6 +2888,7 @@ dependencies = [
  "diesel_migrations",
  "digest",
  "futures",
+ "libsqlite3-sys",
  "log",
  "log-mdc",
  "pin-project 0.4.29",
