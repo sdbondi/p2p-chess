@@ -28,7 +28,8 @@ p2p-chess
 # If you prefer to use an existing tor proxy, use:
 p2p-chess --local-tor-control-port <tor_control_port> # or -t 9051 for short
 ```
-![image](https://user-images.githubusercontent.com/1057902/168811708-a6ddcd01-471f-4c37-aa1c-18625a849f77.png)
+
+![image](https://user-images.githubusercontent.com/1057902/168811990-094690ea-f96a-43c3-9b7a-5d30256664e9.png)
 
 ## Status
 
