@@ -1,6 +1,6 @@
 [package]
 name = "p2p-chess"
-version = "0.0.1"
+version = "0.0.4"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,8 +12,9 @@ networking = { path = "../networking" }
 p2p_chess_channel = { path = "../channel" }
 
 anyhow = "1.0.41"
-tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }
+clap = { version = "3.1.18", features = ["derive"] }
+env_logger = "0.8.4"
+rand = "0.8.4"
 serde = "1.0.126"
 serde_json = "1.0.64"
-rand = "0.8.4"
-env_logger = "0.8.4"
+tokio = { version = "1.7.1", features = ["macros", "rt-multi-thread"] }

@@ -44,6 +44,10 @@ impl ChessBoard {
         }
     }
 
+    pub fn width(&self) -> u32 {
+        self.frame.w
+    }
+
     pub fn height(&self) -> u32 {
         self.frame.h
     }

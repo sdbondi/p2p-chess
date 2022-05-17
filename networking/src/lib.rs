@@ -1,11 +1,14 @@
 mod message;
 mod node;
+mod tor_handle;
 
 use std::{
     fs,
     fs::File,
+    io,
     io::{Read, Write},
     path::Path,
+    process::Command,
     sync::Arc,
     time::Duration,
 };
@@ -21,6 +24,7 @@ pub use tari_comms::{
 use tari_comms::{
     peer_manager::{NodeId, Peer},
     types::CommsPublicKey,
+    CommsNode,
 };
 use tari_comms_dht::{
     domain_message::OutboundDomainMessage,
@@ -31,23 +35,31 @@ use tari_comms_dht::{
 use tari_shutdown::ShutdownSignal;
 use tokio::{sync::mpsc, task};
 
-use crate::message::{Message, MessageType, MoveMsg, NewGameMsg, ProtoMessage, ResignMsg, SyncMsg};
+use crate::{
+    message::{Message, MessageType, MoveMsg, NewGameMsg, ProtoMessage, ResignMsg, SyncMsg},
+    tor_handle::TorHandle,
+};
 
 pub struct Networking {
     dht: Dht,
     in_msg: mpsc::Receiver<DecryptedDhtMessage>,
-
     channel: MessageChannel<ChessOperation>,
     node_identity: Arc<NodeIdentity>,
 }
 
+pub struct NetworkingConfig {
+    pub start_inprocess_tor: bool,
+    pub tor_control_port: Option<u16>,
+}
+
 impl Networking {
     pub async fn start<P: AsRef<Path>>(
+        config: NetworkingConfig,
         node_identity: Arc<NodeIdentity>,
         base_path: P,
         channel: MessageChannel<ChessOperation>,
         shutdown_signal: ShutdownSignal,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<NetworkingHandle> {
         fs::create_dir_all(base_path.as_ref())?;
         let tor_identity = load_json(base_path.as_ref().join("tor.json"))?;
         // TODO
@@ -64,10 +76,24 @@ impl Networking {
         .into_iter()
         .map(|s| peer_from_str(s).unwrap())
         .collect();
+
+        let control_port = config
+            .tor_control_port
+            .unwrap_or_else(|| OsRng.gen_range(15000u16..50000));
+        let socks_port = OsRng.gen_range(15000u16..50000);
+
+        let mut tor_handle = None;
+        if config.start_inprocess_tor {
+            let mut handle = start_tor(control_port, socks_port)?;
+            handle.wait_for_bootstrap()?;
+            tor_handle = Some(handle);
+        }
+
         let port = OsRng.gen_range(15000..50000);
         let (node, dht, in_msg) = node::create(
             node_identity.clone(),
             base_path.as_ref().join("db"),
+            control_port,
             tor_identity,
             port,
             seed_peers,
@@ -76,19 +102,19 @@ impl Networking {
         .await?;
         save_json(base_path.as_ref().join("node-identity.json"), node.node_identity_ref())?;
 
-        node.connectivity()
-            .wait_for_connectivity(Duration::from_secs(30))
-            .await?;
+        let node_identity = node.node_identity();
+        let mut handle = NetworkingHandle::new(node);
+        handle.tor_handle = tor_handle;
 
         let worker = Self {
             dht,
             in_msg,
             channel,
-            node_identity: node.node_identity(),
+            node_identity,
         };
         worker.spawn();
 
-        Ok(())
+        Ok(handle)
     }
 
     fn spawn(self) {
@@ -236,6 +262,40 @@ impl Networking {
     }
 }
 
+pub struct NetworkingHandle {
+    node: CommsNode,
+    tor_handle: Option<TorHandle>,
+}
+
+impl NetworkingHandle {
+    pub fn kill(&mut self) -> io::Result<()> {
+        match self.tor_handle.as_mut() {
+            Some(handle) => handle.kill(),
+            _ => Ok(()),
+        }
+    }
+
+    pub fn new(node: CommsNode) -> Self {
+        Self { node, tor_handle: None }
+    }
+
+    pub async fn wait_for_connectivity(&mut self) -> anyhow::Result<()> {
+        self.node
+            .connectivity()
+            .wait_for_connectivity(Duration::from_secs(30))
+            .await?;
+        Ok(())
+    }
+}
+
+impl Drop for NetworkingHandle {
+    fn drop(&mut self) {
+        if let Err(err) = self.kill() {
+            log::error!("Error killing tor process: {}", err);
+        }
+    }
+}
+
 fn load_json<T: serde::de::DeserializeOwned, P: AsRef<Path>>(path: P) -> anyhow::Result<Option<T>> {
     if !path.as_ref().exists() {
         return Ok(None);
@@ -271,4 +331,26 @@ pub fn peer_from_str(s: &str) -> Option<Peer> {
         Default::default(),
         "tari/chess/0.1".to_string(),
     ))
+}
+
+pub fn start_tor(control_port: u16, socks_port: u16) -> io::Result<TorHandle> {
+    let (reader, stdin) = os_pipe::pipe()?;
+    let stderr = stdin.try_clone()?;
+    let child = Command::new("tor")
+        .arg("--controlport")
+        .arg(format!("127.0.0.1:{}", control_port))
+        .arg("--SocksPort")
+        .arg(format!("{}", socks_port))
+        .arg("--DataDirectory")
+        .arg(".p2pchess/tor")
+        .stdout(stdin)
+        .stderr(stderr)
+        .spawn()?;
+
+    Ok(TorHandle {
+        child,
+        output: reader,
+        control_port,
+        socks_port,
+    })
 }

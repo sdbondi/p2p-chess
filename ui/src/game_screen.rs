@@ -20,6 +20,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct GameScreen {
+    config: GameConfig,
     id: u32,
     seq: u32,
     state: State,
@@ -56,6 +57,7 @@ impl GameScreen {
         back_button.set_text("Back");
 
         Self {
+            config,
             id,
             seq,
             state: State::default(),
@@ -164,6 +166,17 @@ impl GameScreen {
 impl Drawable for GameScreen {
     fn draw(&mut self, buf: &mut FrameBuffer) {
         self.board.draw(buf);
+
+        // Clear score board
+        Rect::new(
+            self.board.width(),
+            0,
+            self.config.window_width - self.board.width(),
+            self.config.window_height,
+            Color::black(),
+        )
+        .draw(buf);
+
         self.back_button.draw(buf);
         self.labels().draw(buf);
 

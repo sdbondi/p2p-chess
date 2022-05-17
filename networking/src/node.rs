@@ -43,11 +43,10 @@ use tari_storage::{
 use tokio::sync::{broadcast, mpsc};
 use tower::ServiceBuilder;
 
-pub const TOR_CONTROL_PORT_ADDR: &str = "/ip4/127.0.0.1/tcp/9051";
-
 pub async fn create<P: AsRef<Path>>(
     node_identity: Arc<NodeIdentity>,
     database_path: P,
+    tor_control_port: u16,
     tor_identity: Option<TorIdentity>,
     onion_port: u16,
     seed_peers: Vec<Peer>,
@@ -85,7 +84,7 @@ pub async fn create<P: AsRef<Path>>(
     let mut hs_builder = tor::HiddenServiceBuilder::new()
         .with_hs_flags(HsFlags::DETACH)
         .with_port_mapping(onion_port)
-        .with_control_server_address(TOR_CONTROL_PORT_ADDR.parse().unwrap());
+        .with_control_server_address(format!("/ip4/127.0.0.1/tcp/{}", tor_control_port).parse().unwrap());
 
     if let Some(tor_identity) = tor_identity {
         println!("Set tor identity from file");

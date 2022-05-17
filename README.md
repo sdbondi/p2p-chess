@@ -17,18 +17,16 @@ libxcb-xfixes0-dev
 
 ## Usage
 
-You'll need to run the tor proxy. On mac use `brew install tor` and run
-
-```shell
-tor  --controlport 127.0.0.1:9051 --SocksPort 9050 
-```
-
-then run
+Install the tor proxy. On mac use `brew install tor`.
+The tor proxy is automatically started.
 
 ```shell
 # Simply run p2p-chess, `.p2pchess` will be created in that folder with your secret network identity
 # and saved games.
 p2p-chess
+
+# If you prefer to use an existing tor proxy, use:
+p2p-chess --local-tor-control-port <tor_control_port> # or -t 9051 for short
 ```
 
 ## Status
