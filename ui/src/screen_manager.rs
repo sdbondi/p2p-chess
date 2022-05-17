@@ -145,7 +145,7 @@ impl ScreenManager {
                     buf.clear(Color::black());
                     self.active_screen =
                         Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
-                } else if self.last_sync.elapsed() > Duration::from_secs(10) {
+                } else if self.last_sync.elapsed() > Duration::from_secs(30) {
                     let msg = ChessOperation {
                         game_id: game.game_id(),
                         seq: game.seq(),
@@ -230,25 +230,29 @@ impl ScreenManager {
             },
             OperationType::Sync { board } => {
                 if let Some(game_mut) = self.games.get_mut(op.game_id) {
-                    if op.seq < game_mut.seq {
-                        // Send a message back with our state
-                        let msg = ChessOperation {
-                            game_id: game_mut.id,
-                            seq: game_mut.seq,
-                            to: game_mut.opponent.clone(),
-                            from: self.public_key.clone(),
-                            operation: OperationType::Sync {
-                                board: game_mut.board_fen.clone(),
-                            },
-                        };
-                        self.send_message(msg).unwrap();
-                    } else {
-                        // Update our game state
-                        game_mut.board_fen = board.clone();
-                        game_mut.seq = op.seq;
-                        game_mut.last_activity = current_timestamp();
-                        self.active_screen.refresh_game(&*game_mut);
-                        self.save_games()?;
+                    match op.seq {
+                        seq if seq < game_mut.seq => {
+                            // Send a message back with our state
+                            let msg = ChessOperation {
+                                game_id: game_mut.id,
+                                seq: game_mut.seq,
+                                to: game_mut.opponent.clone(),
+                                from: self.public_key.clone(),
+                                operation: OperationType::Sync {
+                                    board: game_mut.board_fen.clone(),
+                                },
+                            };
+                            self.send_message(msg).unwrap();
+                        },
+                        seq if seq == game_mut.seq => {},
+                        _ => {
+                            // Update our game state
+                            game_mut.board_fen = board.clone();
+                            game_mut.seq = op.seq;
+                            game_mut.last_activity = current_timestamp();
+                            self.active_screen.refresh_game(&*game_mut);
+                            self.save_games()?;
+                        },
                     }
                 }
             },
@@ -282,6 +286,7 @@ impl Screen {
             Screen::Start(_) => {},
             Screen::Game(g) => {
                 if g.game_id() == game.id {
+                    g.set_seq(game.seq);
                     g.set_board_state(&game.board_fen, None);
                 }
             },
