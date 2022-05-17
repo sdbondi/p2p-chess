@@ -103,7 +103,8 @@ impl ListBox {
     }
 
     fn draw_items(&self, buf: &mut FrameBuffer) {
-        for (i, s) in self.values.iter().enumerate() {
+        let num_items = self.rect.y() as usize / 40;
+        for (i, s) in self.values.iter().take(num_items).enumerate() {
             if self.selected == i {
                 Rect::new(
                     self.rect.x() + 1,
