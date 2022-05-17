@@ -38,8 +38,8 @@ pub struct StartScreen {
 
 impl StartScreen {
     pub fn new(clipboard: Clipboard, public_key: CommsPublicKey) -> Self {
-        let mut title_label = Label::new(Frame::new(495, 10, 500, 40));
-        title_label.set_text("P2P Chess").set_text_color(Color::dark_green());
+        let mut title_label = Label::new(Frame::new(400, 10, 500, 40));
+        title_label.set_text("Privacy Chess").set_text_color(Color::dark_blue());
 
         let mut my_pk_label = Label::new(Frame::new(10, 50, 500, 40));
         my_pk_label
