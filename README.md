@@ -1,7 +1,7 @@
 # Privacy Chess ♔
 
 Ever get tired of chess.com sharing your catastrophic blunders with the world? Introducing privacy-chess, an end-to-end encrypted chess game
-using the [tari](https://github.com/tari-project/tari) testnet network.
+using the [tari](https://github.com/tari-project/tari) testnet network and no servers!
 
 ## Build
 
