@@ -2864,7 +2864,7 @@ dependencies = [
 
 [[package]]
 name = "tari_common"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "anyhow",
  "config",
@@ -2887,7 +2887,7 @@ dependencies = [
 
 [[package]]
 name = "tari_common_sqlite"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "diesel",
  "log",
@@ -2896,7 +2896,7 @@ dependencies = [
 
 [[package]]
 name = "tari_comms"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2941,7 +2941,7 @@ dependencies = [
 
 [[package]]
 name = "tari_comms_dht"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "anyhow",
  "bitflags 1.3.2",
@@ -2977,7 +2977,7 @@ dependencies = [
 
 [[package]]
 name = "tari_comms_rpc_macros"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3018,14 +3018,14 @@ dependencies = [
 
 [[package]]
 name = "tari_shutdown"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "futures",
 ]
 
 [[package]]
 name = "tari_storage"
-version = "0.32.0"
+version = "0.32.2"
 dependencies = [
  "bincode",
  "lmdb-zero",

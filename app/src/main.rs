@@ -2,6 +2,7 @@ mod cli;
 
 use std::{env, fs::File, io::Read, path::Path, sync::Arc};
 
+use anyhow::anyhow;
 use networking::{Multiaddr, Networking, NetworkingConfig, NodeIdentity, PeerFeatures};
 use rand::rngs::OsRng;
 use tari_shutdown::Shutdown;
@@ -14,7 +15,13 @@ const WINDOW_HEIGHT: usize = 90 * 8;
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let cli = cli::init();
-    let base_path = env::current_dir()?.join(".p2pchess");
+    #[allow(deprecated)]
+    let base_path = cli
+        .base_dir
+        .clone()
+        .or_else(|| env::home_dir())
+        .map(|p| p.join(".p2pchess"))
+        .ok_or_else(|| anyhow!("Unable to determine home directory. Use --base-dir to specify one."))?;
     let node_identity = load_json(base_path.join("node-identity.json"))?
         .map(Arc::new)
         .unwrap_or_else(create_node_identity);
@@ -32,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
             resize: true,
             ..Default::default()
         },
-        base_path.to_path_buf(),
+        base_path.clone(),
         channel1,
         node_identity.public_key().clone(),
     );
