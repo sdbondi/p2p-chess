@@ -102,7 +102,7 @@ pub struct MoveMsg {
 pub struct ResignMsg;
 
 #[derive(Clone, prost::Message)]
-pub struct SyncMsg{
+pub struct SyncMsg {
     #[prost(string, tag = "1")]
     pub board: String,
 }
