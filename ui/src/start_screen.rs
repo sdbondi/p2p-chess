@@ -1,6 +1,6 @@
 use minifb::Window;
 use tari_comms::types::CommsPublicKey;
-use tari_crypto::tari_utilities::hex::Hex;
+use tari_crypto::tari_utilities::encoding::Base58;
 
 use crate::{
     clipboard::Clipboard,
@@ -43,7 +43,7 @@ impl StartScreen {
 
         let mut my_pk_label = Label::new(Frame::new(10, 50, 500, 40));
         my_pk_label
-            .set_text(format!("Player public key {}", public_key))
+            .set_text(format!("Player public key {}", public_key.to_base58()))
             .set_text_color(Color::light_grey());
 
         let mut enter_pk_label = Label::new(Frame::new(10, 150, 500, 40));
@@ -63,7 +63,7 @@ impl StartScreen {
         copy_button.set_text("Copy").on_click(move || {
             Clipboard::initialize()
                 .unwrap()
-                .set_contents(public_key.to_hex())
+                .set_contents(public_key.to_base58())
                 .unwrap()
         });
         let mut show_game = Button::new(Rect::new(10, 580, 100, 30, Color::white()));
@@ -115,8 +115,12 @@ impl StartScreen {
     }
 
     pub fn set_games(&mut self, games: &GameCollection) {
-        self.games_selector
-            .set_values(games.iter().map(|g| format!("{} {}", g.id, g.opponent)).collect());
+        self.games_selector.set_values(
+            games
+                .iter()
+                .map(|g| format!("{} {}", g.id, g.opponent.to_base58()))
+                .collect(),
+        );
     }
 }
 

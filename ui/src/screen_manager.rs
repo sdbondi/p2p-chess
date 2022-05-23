@@ -10,7 +10,7 @@ use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType, TryRecvEr
 use pleco::{BitMove, Player};
 use rand::{rngs::OsRng, RngCore};
 use tari_comms::types::CommsPublicKey;
-use tari_crypto::tari_utilities::hex::Hex;
+use tari_crypto::tari_utilities::encoding::Base58;
 
 use crate::{
     board,
@@ -94,7 +94,7 @@ impl ScreenManager {
                 main_screen.draw(buf);
                 let idx = main_screen.show_game_clicked();
                 if let Some(pk) = main_screen.new_game_clicked() {
-                    match CommsPublicKey::from_hex(pk) {
+                    match CommsPublicKey::from_base58(pk) {
                         Ok(pk) => {
                             buf.clear(Color::black());
                             self.create_new_game(pk);
