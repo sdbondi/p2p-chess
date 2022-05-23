@@ -58,10 +58,10 @@ fn init_letters_sprite() -> SpriteSheet<char, Bitmap> {
     // sprite_sheet.ignore_colour(Color::white());
     // TODO: This comes out of bitmap, not sure why
     sprite_sheet.ignore_color(Color::from_rgba(4294836220));
-    for (i, ch) in ('A'..'Z').enumerate() {
+    for (i, ch) in ('A'..='Z').enumerate() {
         sprite_sheet.add_area(ch, letters.offset_xy(i as u32 * 15, 0));
     }
-    for (i, ch) in ('a'..'z').enumerate() {
+    for (i, ch) in ('a'..='z').enumerate() {
         sprite_sheet.add_area(ch, letters.offset_xy(i as u32 * 15, 20));
     }
     for (i, ch) in ('0'..='9').enumerate() {
