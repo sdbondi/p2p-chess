@@ -118,7 +118,7 @@ impl ListBox {
             LETTERS.draw_string(
                 s,
                 self.rect.x() + 2,
-                self.rect.y() + (i as u32) * 25 - 2,
+                self.rect.y() + (i as u32) * 25,
                 self.text_color,
                 buf,
             );
