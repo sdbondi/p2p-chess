@@ -120,13 +120,13 @@ impl ScreenManager {
                 }
             },
             Screen::Game(ref mut game) => {
-                game.draw(buf);
                 game.update(&window);
                 if let Some(mv) = game.take_last_move_played() {
-                    dbg!("move played", mv);
+                    game.inc_seq();
+                    dbg!("move played", mv, game.seq());
                     let msg = ChessOperation {
                         game_id: game.game_id(),
-                        seq: game.next_seq(),
+                        seq: game.seq(),
                         to: game.opponent().clone(),
                         from: self.public_key.clone(),
                         operation: OperationType::MovePlayed {
@@ -141,11 +141,13 @@ impl ScreenManager {
                     }
                 }
 
+                game.draw(buf);
+
                 if game.was_back_clicked() {
                     buf.clear(Color::black());
                     self.active_screen =
                         Screen::Start(StartScreen::new(self.clipboard.clone(), self.public_key.clone()));
-                } else if self.last_sync.elapsed() > Duration::from_secs(30) {
+                } else if game.seq() > 0 && self.last_sync.elapsed() > Duration::from_secs(30) {
                     let msg = ChessOperation {
                         game_id: game.game_id(),
                         seq: game.seq(),

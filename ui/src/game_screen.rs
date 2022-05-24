@@ -78,7 +78,7 @@ impl GameScreen {
         self
     }
 
-    pub fn next_seq(&mut self) -> u32 {
+    pub fn inc_seq(&mut self) -> u32 {
         self.seq += 1;
         self.seq
     }
