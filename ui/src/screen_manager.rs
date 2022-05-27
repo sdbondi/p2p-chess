@@ -136,6 +136,7 @@ impl ScreenManager {
                     };
                     self.channel.try_send(msg).unwrap();
                     if let Some(game_mut) = self.games.get_mut(game.game_id()) {
+                        game_mut.seq = game.seq();
                         game_mut.board_fen = game.to_board_fen();
                         game_mut.last_activity = current_timestamp();
                     }
