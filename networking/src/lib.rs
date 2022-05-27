@@ -137,7 +137,7 @@ impl Networking {
     }
 
     async fn handle_operation(&self, op: ChessOperation) -> anyhow::Result<()> {
-        dbg!(&op);
+        dbg!("sending", &op);
         match op.operation {
             OperationType::NewGame { player } => {
                 self.broadcast_msg(
@@ -184,6 +184,7 @@ impl Networking {
             Some(body) => {
                 let msg = body.decode_part::<ProtoMessage>(1)?.ok_or_else(|| anyhow!("No msg"))?;
                 let msg_type = msg.message_type.try_into()?;
+                dbg!("inbound", &msg_type);
                 let op = match msg_type {
                     MessageType::NewGame => {
                         let msg = Message::<NewGameMsg>::try_from(msg)?;
