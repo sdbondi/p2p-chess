@@ -13,6 +13,7 @@ Dependencies:
 libasound-dev 
 libxcb-shape0-dev
 libxcb-xfixes0-dev
+libxkbcommon-dev
 ```
 
 ## Usage
