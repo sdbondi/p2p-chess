@@ -1,0 +1,162 @@
+---
+name: "build binaries"
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - build-*
+  schedule:
+    - cron: "05 00 * * *"
+  workflow_dispatch:
+    inputs:
+      customTag:
+        description: "Main Tag"
+        required: true
+        default: "main-tag"
+
+env:
+  APP_FILENAME: "p2p-chess"
+
+jobs:
+  builds:
+    name: Build and upload Binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, macos-10.15, windows-2019]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Declare Global Variables 4 GHA ${{ github.event_name }}
+        id: vars
+        shell: bash
+        run: |
+          echo "VBRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          echo "VSHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          components: rustfmt
+          override: true
+
+      - name: Install Linux dependencies - Ubuntu
+        if: startsWith(runner.os,'Linux')
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install \
+            openssl \
+            libssl-dev \
+            pkg-config \
+            libsqlite3-dev \
+            clang-10 \
+            git \
+            cmake \
+            libc++-dev \
+            libc++abi-dev \
+            libprotobuf-dev \
+            protobuf-compiler \
+            libncurses5-dev \
+            libncursesw5-dev \
+            zip \
+            build-essential \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            libsoup2.4-dev \
+            curl \
+            wget \
+            libappindicator3-dev \
+            patchelf \
+            librsvg2-dev
+
+      - name: Install macOS dependencies
+        if: startsWith(runner.os,'macOS')
+        run: brew install cmake zip coreutils automake autoconf
+
+      - name: Install Windows dependencies
+        if: startsWith(runner.os,'Windows')
+        run: |
+          vcpkg.exe install sqlite3:x64-windows zlib:x64-windows
+          choco upgrade llvm zip psutils openssl strawberryperl -y
+
+      - name: Set environment variables - Nix
+        if: "!startsWith(runner.os,'Windows')"
+        run: |
+          echo "SHARUN=shasum --algorithm 256" >> $GITHUB_ENV
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "APP_EXT=" >> $GITHUB_ENV
+          echo "LIB_PRE=lib" >> $GITHUB_ENV
+          echo "SHELL_EXT=.sh" >> $GITHUB_ENV
+          echo "PLATFORM_SPECIFIC_DIR=linux" >> $GITHUB_ENV
+          echo "APP_DIST=/dist" >> $GITHUB_ENV
+
+      - name: Set environment variables - Windows
+        if: startsWith(runner.os,'Windows')
+        shell: bash
+        run: |
+          echo "SHARUN=pwsh C:\ProgramData\chocolatey\lib\psutils\tools\psutils-master\shasum.ps1 --algorithm 256" >> $GITHUB_ENV
+          echo "APP_EXT=.exe" >> $GITHUB_ENV
+          echo "LIB_EXT=.dll" >> $GITHUB_ENV
+          echo "LIB_PRE=" >> $GITHUB_ENV
+          echo "SHELL_EXT=.bat" >> $GITHUB_ENV
+          echo "APP_DIST=\dist" >> $GITHUB_ENV
+          echo "PLATFORM_SPECIFIC_DIR=windows" >> $GITHUB_ENV
+          echo "SQLITE3_LIB_DIR=C:\vcpkg\installed\x64-windows\lib" >> $GITHUB_ENV
+          echo "OPENSSL_DIR=C:\Program Files\OpenSSL-Win64" >> $GITHUB_ENV
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $GITHUB_ENV
+          echo "C:\Strawberry\perl\bin" >> $GITHUB_PATH
+
+      - name: Cache cargo files and outputs
+        uses: Swatinem/rust-cache@v1
+
+      - name: Build binaries
+        run: |
+          cargo build --release
+
+      - name: Copy binaries to folder for zipping
+        shell: bash
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE${APP_DIST}"
+          cd "$GITHUB_WORKSPACE${APP_DIST}"
+          VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/[\"]/, "", $2); printf("%s",$2) }' "$GITHUB_WORKSPACE/Cargo.toml")
+          echo "Branch: ${VBRANCH}"
+          echo "Sha: ${VSHA_SHORT}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "VSHA_SHORT=${VSHA_SHORT}" >> $GITHUB_ENV
+          BINFILE="${APP_FILENAME}-${VERSION}-${VSHA_SHORT}-${{ matrix.os }}${APP_EXT}"
+          echo "BINFILE=${BINFILE}" >> $GITHUB_ENV
+          echo "Copying files for ${BINFILE} to $(pwd)"
+          ls -la "$GITHUB_WORKSPACE/target/release/"
+          cp -v "$GITHUB_WORKSPACE/target/release/${{ env.APP_FILENAME }}${APP_EXT}" .
+
+      - name: Archive and Checksum Binaries
+        shell: bash
+        run: |
+          echo "Archive ${{ env.BINFILE }} too ${{ env.BINFILE }}.zip"
+          cd "$GITHUB_WORKSPACE${{ env.APP_DIST }}"
+          #zip -j "${{ env.BINFILE }}.zip" "${{ env.BINFILE }}"
+          zip -j "${{ env.BINFILE }}.zip" *
+          echo "Compute shasum"
+          ${SHARUN} "${{ env.BINFILE }}.zip" >> "${{ env.BINFILE }}.zip.sha256"
+          cat "${{ env.BINFILE }}.zip.sha256"
+          echo "Verifications is "
+          ${SHARUN} --check "${{ env.BINFILE }}.zip.sha256"
+          if [ -f "${{ env.distDirPKG }}/${{ env.APP_FILENAME }}-${{ env.VERSION }}.pkg" ]; then
+            echo "Add PKG to $GITHUB_WORKSPACE${{ env.APP_DIST }} "
+            cp -v "${{ env.distDirPKG }}/${{ env.APP_FILENAME }}-${{ env.VERSION }}.pkg" "$GITHUB_WORKSPACE${{ env.APP_DIST }}"
+            ${SHARUN} "${{ env.APP_FILENAME }}-${{ env.VERSION }}.pkg" >> "${{ env.APP_FILENAME }}-${{ env.VERSION }}.pkg.sha256"
+            ${SHARUN} --check "${{ env.APP_FILENAME }}-${{ env.VERSION }}.pkg.sha256"
+          fi
+
+      - name: Artifact upload for Archive
+        uses: actions/upload-artifact@v2
+        with:
+          #name: ${{ env.APP_FILENAME }}-${{ env.VERSION }}-${{ env.VSHA_SHORT }}-${{ matrix.os }}-${{ matrix.target_cpu }}-${{ matrix.features }}
+          name: ${{ env.APP_FILENAME }}_archive-${{ matrix.os }}
+          path: "${{ github.workspace }}${{ env.APP_DIST }}/${{ env.BINFILE }}.zip*"
