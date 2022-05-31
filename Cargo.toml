@@ -5,3 +5,6 @@ members = [
     "networking",
     "ui",
 ]
+
+[patch.crates-io]
+liblmdb-sys = { git = "https://github.com/leet4tari/lmdb-rs.git" }
