@@ -43,7 +43,9 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          components: rustfmt
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
           override: true
 
       - name: Install Linux dependencies - Ubuntu
