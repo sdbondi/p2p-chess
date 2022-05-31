@@ -23,10 +23,11 @@ jobs:
   builds:
     name: Build and upload Binaries
     strategy:
-#      fail-fast: false
+      fail-fast: false
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
-        os: [ macos-12, macos-11, macos-10.15]
+#        os: [ macos-12, macos-11, macos-10.15]
+        os: [ macos-12, macos-11 ]
 #        os: [ubuntu-18.04, macos-10.15, windows-2019]
         # https://doc.rust-lang.org/rustc/platform-support.html
         target: [ aarch64-apple-darwin, x86_64-apple-darwin ]
