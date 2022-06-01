@@ -27,10 +27,35 @@ jobs:
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
 #        os: [ macos-12, macos-11, macos-10.15]
-        os: [ macos-12, macos-11 ]
 #        os: [ubuntu-18.04, macos-10.15, windows-2019]
         # https://doc.rust-lang.org/rustc/platform-support.html
-        target: [ aarch64-apple-darwin, x86_64-apple-darwin ]
+#        target: [ aarch64-apple-darwin, x86_64-apple-darwin ]
+        # https://github.com/lotabout/skim/blob/master/.github/workflows/publish-github.yml
+
+#        build: [ linux-x86_64, arm, arm-v7, macos-x86_64, macos-arm64, windows-x64 ]
+        build: [ linux-x86_64, macos-x86_64, macos-arm64, windows-x64 ]
+
+        include:
+        - build: linux-x86_64
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-gnu
+          cross: false
+        - build: macos-x86_64
+          os: macos-latest
+          rust: stable
+          target: x86_64-apple-darwin
+          cross: false
+        - build: macos-arm64
+          os: macos-latest
+          rust: stable
+          target: aarch64-apple-darwin
+          cross: true
+        - build: windows-x64
+          os: windows-latest
+          rust: stable
+          target: x86_64-pc-windows-msvc
+          cross: false
 
     runs-on: ${{ matrix.os }}
 
@@ -49,10 +74,11 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
           components: rustfmt, clippy
-          override: true
+          toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
+          use-cross: ${{ matrix.cross }}
+          override: true
 
       - name: Install Linux dependencies - Ubuntu
         if: startsWith(runner.os,'Linux')
@@ -109,7 +135,7 @@ jobs:
       - name: Build target binaries
         uses: actions-rs/cargo@v1
         with:
-          use-cross: true
+          use-cross: ${{ matrix.cross }}
           command: build
           args: --release --target ${{ matrix.target }}
 
