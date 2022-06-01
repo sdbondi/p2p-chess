@@ -8,7 +8,7 @@ on:
     branches:
       - build-*
   schedule:
-    - cron: "05 00 * * *"
+    - cron: "05 00 * * 1"
   workflow_dispatch:
     inputs:
       customTag:
@@ -26,13 +26,11 @@ jobs:
       fail-fast: false
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
-#        os: [ macos-12, macos-11, macos-10.15]
 #        os: [ubuntu-18.04, macos-10.15, windows-2019]
         # https://doc.rust-lang.org/rustc/platform-support.html
 #        target: [ aarch64-apple-darwin, x86_64-apple-darwin ]
         # https://github.com/lotabout/skim/blob/master/.github/workflows/publish-github.yml
 
-#        build: [ linux-x86_64, arm, arm-v7, macos-x86_64, macos-arm64, windows-x64 ]
         build: [ linux-x86_64, linux-arm64, macos-x86_64, macos-arm64, windows-x64 ]
 
         include:
