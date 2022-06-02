@@ -93,6 +93,7 @@ jobs:
             pkg-config \
             libsqlite3-dev \
             libasound-dev \
+            librust-alsa-sys-dev \
             libxcb-shape0-dev \
             libxcb-xfixes0-dev \
             libxkbcommon-dev
