@@ -8,7 +8,7 @@ on:
     branches:
       - build-*
   schedule:
-    - cron: "05 00 * * *"
+    - cron: "05 00 * * 1"
   workflow_dispatch:
     inputs:
       customTag:
@@ -25,7 +25,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macos-10.15, windows-2019]
+        # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+#        os: [ubuntu-18.04, macos-10.15, windows-2019]
+        # https://doc.rust-lang.org/rustc/platform-support.html
+#        target: [ aarch64-apple-darwin, x86_64-apple-darwin ]
+        # https://github.com/lotabout/skim/blob/master/.github/workflows/publish-github.yml
+
+        build: [ linux-x86_64, linux-arm64, macos-x86_64, macos-arm64, windows-x64 ]
+
+        include:
+        - build: linux-x86_64
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-gnu
+          cross: false
+        - build: linux-arm64
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+          cross: true
+        - build: macos-x86_64
+          os: macos-latest
+          rust: stable
+          target: x86_64-apple-darwin
+          cross: false
+        - build: macos-arm64
+          os: macos-latest
+          rust: stable
+          target: aarch64-apple-darwin
+          cross: true
+        - build: windows-x64
+          os: windows-latest
+          rust: stable
+          target: x86_64-pc-windows-msvc
+          cross: false
 
     runs-on: ${{ matrix.os }}
 
@@ -44,8 +77,10 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
           components: rustfmt, clippy
+          toolchain: ${{ matrix.rust }}
+          target: ${{ matrix.target }}
+#          use-cross: ${{ matrix.cross }}
           override: true
 
       - name: Install Linux dependencies - Ubuntu
@@ -100,9 +135,12 @@ jobs:
       - name: Cache cargo files and outputs
         uses: Swatinem/rust-cache@v1
 
-      - name: Build binaries
-        run: |
-          cargo build --release
+      - name: Build target binaries
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.cross }}
+          command: build
+          args: --release --target ${{ matrix.target }}
 
       - name: Copy binaries to folder for zipping
         shell: bash
@@ -117,8 +155,8 @@ jobs:
           BINFILE="${APP_FILENAME}-${VERSION}-${VSHA_SHORT}-${{ matrix.os }}${APP_EXT}"
           echo "BINFILE=${BINFILE}" >> $GITHUB_ENV
           echo "Copying files for ${BINFILE} to $(pwd)"
-          ls -la "$GITHUB_WORKSPACE/target/release/"
-          cp -v "$GITHUB_WORKSPACE/target/release/${{ env.APP_FILENAME }}${APP_EXT}" .
+          ls -la "$GITHUB_WORKSPACE/target/${{ matrix.target }}/release/"
+          cp -v "$GITHUB_WORKSPACE/target/${{ matrix.target }}/release/${{ env.APP_FILENAME }}${APP_EXT}" .
 
       - name: Archive and Checksum Binaries
         shell: bash
@@ -135,5 +173,5 @@ jobs:
       - name: Artifact upload for Archive
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.APP_FILENAME }}_archive-${{ matrix.os }}.zip
+          name: ${{ env.APP_FILENAME }}_archive-${{ matrix.os }}-${{ matrix.target }}.zip
           path: "${{ github.workspace }}${{ env.APP_DIST }}/${{ env.BINFILE }}.zip*"
