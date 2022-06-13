@@ -4,7 +4,12 @@ use std::{
 };
 
 use minifb::{MouseButton, MouseMode, Window};
-use pleco::{BitMove, Player};
+use pleco::{
+    core::piece_move::{MoveFlag, PreMoveInfo},
+    BitMove,
+    PieceType,
+    Player,
+};
 use tari_comms::types::CommsPublicKey;
 
 use crate::{
@@ -200,13 +205,25 @@ impl Drawable for GameScreen {
         } else {
             if self.floating_piece.is_some() {
                 match self.state.mouse_pos.and_then(|(x, y)| self.board.get_square(x, y)) {
-                    Some(sq) => {
-                        if let Some(mv) = self.board.make_move_to(sq) {
-                            self.last_move_played = Some(mv);
-                            self.board.set_last_move(mv);
-                        } else {
+                    Some(sq) => match self.board.get_move_to(sq) {
+                        Some(mut legal_move) => {
+                            if legal_move.is_promo() {
+                                legal_move = BitMove::init(PreMoveInfo {
+                                    src: legal_move.get_src(),
+                                    dst: legal_move.get_dest(),
+                                    flags: MoveFlag::Promotion {
+                                        capture: legal_move.is_capture(),
+                                        prom: PieceType::Q,
+                                    },
+                                });
+                            }
+                            self.board.make_legal_move(legal_move);
+                            self.last_move_played = Some(legal_move);
+                            self.board.set_last_move(legal_move);
+                        },
+                        None => {
                             self.board.return_taken_piece();
-                        }
+                        },
                     },
                     None => {
                         self.board.return_taken_piece();

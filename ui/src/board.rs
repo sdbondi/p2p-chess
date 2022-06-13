@@ -72,23 +72,22 @@ impl ChessBoard {
         self.taken_piece = None;
     }
 
-    pub fn make_move_to(&mut self, dest: SQ) -> Option<BitMove> {
+    pub fn get_move_to(&mut self, dest: SQ) -> Option<BitMove> {
         if let Some((src, _)) = self.taken_piece {
             let all_moves = self.board.generate_moves();
             if let Some(mv) = all_moves.iter().find(|m| m.get_src() == src && m.get_dest() == dest) {
-                dbg!(src.to_string(), dest.to_string(), mv.to_string());
-                self.board.apply_move(*mv);
                 return Some(*mv);
             } else {
                 if let Some(castle) = self.castle_move(src, dest) {
-                    dbg!(src.to_string(), dest.to_string(), castle);
-                    self.board.apply_move(castle);
                     return Some(castle);
                 }
             }
         }
-        self.return_taken_piece();
         None
+    }
+
+    pub fn make_legal_move(&mut self, mv: BitMove) {
+        self.board.apply_move(mv);
     }
 
     pub fn castle_move(&self, src: SQ, dest: SQ) -> Option<BitMove> {
