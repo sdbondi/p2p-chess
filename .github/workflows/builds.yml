@@ -63,7 +63,7 @@ jobs:
             target: aarch64-pc-windows-msvc
             cross: false
         exclude:
-          - build: [linux-arm64]
+          - build: [ linux-arm64, windows-arm64, ]
 
     runs-on: ${{ matrix.os }}
 
