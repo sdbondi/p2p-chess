@@ -1,8 +1,0 @@
-[build]
-build-std = false                              # do not build the std library. has precedence over xargo
-xargo = true                                   # enable the use of xargo by default
-default-target = "x86_64-unknown-linux-gnu"    # use this target if none is explicitly provided
-pre-build = [                                  # additional commands to run prior to building the package
-  "dpkg --add-architecture $CROSS_DEB_ARCH",
-  "apt-get update && apt-get --assume-yes install libssl-dev:$CROSS_DEB_ARCH alsa-sys:$CROSS_DEB_ARCH openssl:$CROSS_DEB_ARCH libssl-dev:$CROSS_DEB_ARCH pkg-config:$CROSS_DEB_ARCH libsqlite3-dev:$CROSS_DEB_ARCH libasound-dev:$CROSS_DEB_ARCH librust-alsa-sys-dev:$CROSS_DEB_ARCH libxcb-shape0-dev:$CROSS_DEB_ARCH libxcb-xfixes0-dev:$CROSS_DEB_ARCH libxkbcommon-dev:$CROSS_DEB_ARCH"
-]
