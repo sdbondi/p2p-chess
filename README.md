@@ -45,6 +45,9 @@ Apple users might need to accept Gatekeeper security warning - [Safely open apps
 
 ## ToDo
 
+- Game features
+  - Sound!
+  - Confirm move before submitting it
 - CI for binary releases
   - Apple - Intel (x86-64)
   - Apple - M1 (ARM64)
