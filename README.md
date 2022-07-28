@@ -48,6 +48,7 @@ Apple users might need to accept Gatekeeper security warning - [Safely open apps
 - Game features
   - Sound!
   - Confirm move before submitting it
+	- Promotion to piece other than queen
 - CI for binary releases
   - Apple - Intel (x86-64)
   - Apple - M1 (ARM64)
