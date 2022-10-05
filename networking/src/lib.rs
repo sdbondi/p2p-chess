@@ -265,6 +265,7 @@ impl Networking {
                 OutboundEncryption::EncryptFor(Box::new(public_key.clone())),
                 vec![],
                 OutboundDomainMessage::new(&num, msg.clone()),
+                String::new(),
             )
             .await?;
 
