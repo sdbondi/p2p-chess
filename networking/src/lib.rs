@@ -15,7 +15,7 @@ use std::{
 
 use anyhow::anyhow;
 use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType};
-use rand::{rngs::OsRng, Rng, RngCore};
+use rand::{rngs::OsRng, thread_rng, Rng, RngCore};
 // Re-exports
 pub use tari_comms::{
     multiaddr::Multiaddr,
@@ -88,8 +88,8 @@ impl Networking {
 
         let control_port = config
             .tor_control_port
-            .unwrap_or_else(|| OsRng.gen_range(15000u16..50000));
-        let socks_port = OsRng.gen_range(15000u16..50000);
+            .unwrap_or_else(|| OsRng.gen_range(15000u16, 50000));
+        let socks_port = OsRng.gen_range(15000u16, 50000);
 
         let mut tor_handle = None;
         if config.start_inprocess_tor {
@@ -98,7 +98,7 @@ impl Networking {
             tor_handle = Some(handle);
         }
 
-        let port = OsRng.gen_range(15000..50000);
+        let port = thread_rng().gen_range(15000, 50000);
         let (node, dht, in_msg) = node::create(
             node_identity.clone(),
             base_path.as_ref().join("db"),
@@ -257,7 +257,7 @@ impl Networking {
         msg: Message<T>,
     ) -> anyhow::Result<()> {
         let msg = msg.to_proto_message();
-        let num = OsRng.next_u32() as i32;
+        let num = thread_rng().next_u32() as i32;
         self.dht
             .outbound_requester()
             .broadcast(
