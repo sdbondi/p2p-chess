@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 # TODO: Just needed for CommsPublicKey
-tari_comms = { git = "https://github.com/tari-project/tari.git", tag = "v0.38.5"}
+tari_comms = { git = "https://github.com/tari-project/tari.git", tag = "v0.38.7"}
 
 tokio = { version = "1", default-features = false, features = ["sync"] }

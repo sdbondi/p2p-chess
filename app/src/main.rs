@@ -51,8 +51,13 @@ async fn main() -> anyhow::Result<()> {
     println!("Starting networking...");
     let mut networking = Networking::start(config, node_identity, &base_path, channel2, signal).await?;
 
-    println!("Waiting for peer connections...");
-    networking.wait_for_connectivity().await?;
+    loop {
+        println!("Waiting for peer connections...");
+        match networking.wait_for_connectivity().await {
+            Ok(_) => break,
+            Err(e) => println!("{}. Still waiting...", e),
+        }
+    }
 
     println!("Starting UI");
     ui.run()?;
