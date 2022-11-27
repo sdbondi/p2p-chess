@@ -1,6 +1,6 @@
 use std::mem::transmute;
 
-use pleco::{core::CastleType, BitMove, Board, File, Piece, Player, Rank, SQ};
+use tanton::{core::CastleType, BitMove, Board, File, Piece, Player, Rank, SQ};
 
 use crate::{
     bitmap::Bitmap,
@@ -52,7 +52,7 @@ impl ChessBoard {
         self.frame.h
     }
 
-    pub fn take_piece_at(&mut self, x: u32, y: u32) -> Option<pleco::Piece> {
+    pub fn take_piece_at(&mut self, x: u32, y: u32) -> Option<tanton::Piece> {
         let sq = self.coords_to_sq(x, y)?;
         match self.board.piece_at_sq(sq) {
             Piece::None => None,
@@ -262,8 +262,8 @@ impl Drawable for ChessBoard {
     }
 }
 
-fn piece_to_sprite_name(piece: pleco::Piece) -> &'static str {
-    use pleco::Piece::*;
+fn piece_to_sprite_name(piece: tanton::Piece) -> &'static str {
+    use tanton::Piece::*;
     match piece {
         None => todo!(),
         WhitePawn => "pawn-white",
