@@ -4,11 +4,9 @@ use std::{
 };
 
 use minifb::{MouseButton, MouseMode, Window};
-use pleco::{
+use tanton::{
     core::piece_move::{MoveFlag, PreMoveInfo},
-    BitMove,
-    PieceType,
-    Player,
+    BitMove, PieceType, Player,
 };
 use tari_comms::types::CommsPublicKey;
 

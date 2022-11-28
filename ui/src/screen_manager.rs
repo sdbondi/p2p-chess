@@ -7,8 +7,8 @@ use std::{
 use anyhow::anyhow;
 use minifb::Window;
 use p2p_chess_channel::{ChessOperation, MessageChannel, OperationType, TryRecvError, TrySendError};
-use pleco::{BitMove, Player};
 use rand::{rngs::OsRng, RngCore};
+use tanton::{BitMove, Player};
 use tari_comms::types::CommsPublicKey;
 use tari_crypto::tari_utilities::encoding::Base58;
 

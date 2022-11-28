@@ -15,5 +15,5 @@ pub mod start_screen;
 mod ui;
 // Reexports
 pub use minifb::{Key, ScaleMode, Window, WindowOptions};
-pub use pleco::BitMove;
+pub use tanton::BitMove;
 pub use ui::ChessUi;

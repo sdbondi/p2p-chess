@@ -1,7 +1,7 @@
 use std::ops::Index;
 
-use pleco::Player;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use tanton::Player;
 use tari_comms::types::CommsPublicKey;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,7 +88,9 @@ fn serialize_player<S: Serializer>(player: &Player, ser: S) -> Result<S::Ok, S::
 }
 
 fn deserialize_player<'de, D>(des: D) -> Result<Player, D::Error>
-where D: Deserializer<'de> {
+where
+    D: Deserializer<'de>,
+{
     match <u8 as serde::Deserialize>::deserialize(des) {
         Ok(0) => Ok(Player::White),
         Ok(1) => Ok(Player::Black),
