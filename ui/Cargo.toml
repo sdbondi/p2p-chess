@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tari_comms = { git = "https://github.com/tari-project/tari.git", tag = "v0.38.7" }
-tari_crypto = { git = "https://github.com/tari-project/tari-crypto.git", tag = "v0.15.6" }
+tari_comms = { git = "https://github.com/tari-project/tari.git", tag = "v0.45.0" }
+tari_crypto = { git = "https://github.com/tari-project/tari-crypto.git", tag = "v0.16.6" }
 p2p_chess_channel = { path = "../channel" }
 
 anyhow = "1.0.41"
