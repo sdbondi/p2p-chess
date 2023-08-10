@@ -22,6 +22,7 @@ pub use tari_comms::{
     peer_manager::{NodeIdentity, PeerFeatures},
 };
 use tari_comms::{
+    net_address::{MultiaddressesWithStats, PeerAddressSource},
     peer_manager::{NodeId, Peer},
     types::CommsPublicKey,
     CommsNode,
@@ -333,10 +334,12 @@ pub fn peer_from_str(s: &str) -> Option<Peer> {
     let pk = split.next().and_then(|s| CommsPublicKey::from_hex(s).ok())?;
     let node_id = NodeId::from_key(&pk);
     let address = split.next().and_then(|s| s.parse::<Multiaddr>().ok())?;
+    let addresses =
+        MultiaddressesWithStats::from_addresses_with_source(vec![address.into()], &PeerAddressSource::Config);
     Some(Peer::new(
         pk,
         node_id,
-        vec![address].into(),
+        addresses,
         Default::default(),
         PeerFeatures::COMMUNICATION_NODE,
         Default::default(),
