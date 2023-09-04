@@ -65,23 +65,8 @@ impl Networking {
         let tor_identity = load_json(base_path.as_ref().join("tor.json"))?;
         // TODO
         let seed_peers = [
-            "9ef92ebc40d7eed10b8d58918fd3428d9ccd024e648ff65ab2175838449bd156::/onion3/\
-             ktklqtbss2t4w7oiykijks24q4oogy2ghpvhplbvyrupjhqerx5t27qd:18141",
-            "c2eca9cf32261a1343e21ed718e79f25bfc74386e9305350b06f62047f519347::/onion3/\
-             6yxqk2ybo43u73ukfhyc42qn25echn4zegjpod2ccxzr2jd5atipwzqd:18141",
-            "42fcde82b44af1de95a505d858cb31a422c56c4ac4747fbf3da47d648d4fc346::/onion3/\
-             2l3e7ysmihc23zybapdrsbcfg6omtjtfkvwj65dstnfxkwtai2fawtyd:18141",
-            "50e6aa8f6c50f1b9d9b3d438dfd2a29cfe1f3e3a650bd9e6b1e10f96b6c38f4d::/onion3/\
-             7s6y3cz5bnewlj5ypm7sekhgvqjyrq4bpaj5dyvvo7vxydj7hsmyf5ad:18141",
-            "36a9df45e1423b5315ffa7a91521924210c8e1d1537ad0968450f20f21e5200d::/onion3/\
-             v24qfheti2rztlwzgk6v4kdbes3ra7mo3i2fobacqkbfrk656e3uvnid:18141",
-            "be128d570e8ec7b15c101ee1a56d6c56dd7d109199f0bd02f182b71142b8675f::/onion3/\
-             ha422qsy743ayblgolui5pg226u42wfcklhc5p7nbhiytlsp4ir2syqd:18141",
-            "3e0321c0928ca559ab3c0a396272dfaea705efce88440611a38ff3898b097217::/onion3/\
-             sl5ledjoaisst6d4fh7kde746dwweuge4m4mf5nkzdhmy57uwgtb7qqd:18141",
-            "b0f797e7413b39b6646fa370e8394d3993ead124b8ba24325c3c07a05e980e7e::/ip4/35.177.93.69/tcp/18189",
-            "0eefb45a4de9484eca74846a4f47d2c8d38e76be1fec63b0112bd00d297c0928::/ip4/13.40.98.39/tcp/18189",
-            "544ed2baed414307e119d12894e27f9ddbdfa2fd5b6528dc843f27903e951c30::/ip4/13.40.189.176/tcp/18189",
+            "881d8742d4cdf5dc99def7271405e6a3fc56080ea3387cc568b9efdef1cdeb7b::/onion3/\
+             spxhershjnwrl5p366xx2lc44sjxrhu3kypjj6ws3jxe4yiwy5ocftqd:18141",
         ]
         .into_iter()
         .map(|s| peer_from_str(s).unwrap())
@@ -89,8 +74,8 @@ impl Networking {
 
         let control_port = config
             .tor_control_port
-            .unwrap_or_else(|| OsRng.gen_range(15000u16, 50000));
-        let socks_port = OsRng.gen_range(15000u16, 50000);
+            .unwrap_or_else(|| OsRng.gen_range(15000u16..50000));
+        let socks_port = OsRng.gen_range(15000u16..50000);
 
         let mut tor_handle = None;
         if config.start_inprocess_tor {
@@ -99,7 +84,7 @@ impl Networking {
             tor_handle = Some(handle);
         }
 
-        let port = thread_rng().gen_range(15000, 50000);
+        let port = thread_rng().gen_range(15000..50000);
         let (node, dht, in_msg) = node::create(
             node_identity.clone(),
             base_path.as_ref().join("db"),
@@ -110,6 +95,8 @@ impl Networking {
             shutdown_signal,
         )
         .await?;
+        let last_address = node.node_identity().public_addresses().last().unwrap().clone();
+        node.node_identity().set_public_addresses(vec![last_address]);
         save_json(base_path.as_ref().join("node-identity.json"), node.node_identity_ref())?;
 
         let node_identity = node.node_identity();

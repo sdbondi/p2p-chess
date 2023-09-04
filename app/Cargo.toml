@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tari_shutdown = { git = "https://github.com/tari-project/tari.git", tag = "v0.51.0-pre.4" }
+tari_shutdown = { git = "https://github.com/tari-project/tari.git", branch = "development" }
 ui = { path = "../ui" }
 networking = { path = "../networking" }
 p2p_chess_channel = { path = "../channel" }
@@ -14,7 +14,8 @@ p2p_chess_channel = { path = "../channel" }
 anyhow = "1.0.41"
 clap = { version = "3.1.18", features = ["derive"] }
 env_logger = "0.8.4"
-rand = "0.7"
+multiaddr = "0.14.0"
+rand = "0.8"
 serde = "1.0.126"
 serde_json = "1.0.64"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

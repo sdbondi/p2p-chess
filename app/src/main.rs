@@ -3,7 +3,8 @@ mod cli;
 use std::{env, fs::File, io::Read, path::Path, sync::Arc};
 
 use anyhow::anyhow;
-use networking::{Multiaddr, Networking, NetworkingConfig, NodeIdentity, PeerFeatures};
+use multiaddr::multiaddr;
+use networking::{Networking, NetworkingConfig, NodeIdentity, PeerFeatures};
 use rand::rngs::OsRng;
 use tari_shutdown::Shutdown;
 use ui::{ChessUi, ScaleMode, WindowOptions};
@@ -79,7 +80,8 @@ fn load_json<T: serde::de::DeserializeOwned, P: AsRef<Path>>(path: P) -> anyhow:
 fn create_node_identity() -> Arc<NodeIdentity> {
     Arc::new(NodeIdentity::random(
         &mut OsRng,
-        Multiaddr::empty(),
+        // Some fake address, otherwise nodes wont allow us to connect
+        multiaddr![Ip4([123, 234, 123, 234]), Tcp(12345u16)],
         PeerFeatures::COMMUNICATION_CLIENT,
     ))
 }

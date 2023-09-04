@@ -22,6 +22,7 @@
 
 use std::{fs, path::Path, sync::Arc, time::Duration};
 
+use tari_common::configuration::Network;
 use tari_comms::{
     backoff::ConstantBackoff,
     peer_manager::Peer,
@@ -70,7 +71,8 @@ pub async fn create<P: AsRef<Path>>(
         .with_node_info(NodeNetworkInfo {
             major_version: 0,
             minor_version: 0,
-            network_byte: 0x26,
+            // TODO
+            network_byte: Network::Igor.as_byte(),
             user_agent: "/tari/chess/0.0.1".to_string(),
         })
         .with_node_identity(node_identity.clone())
